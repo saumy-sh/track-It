@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" rel="stylesheet" />
+    <style>
+        #return{
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Display flash messages -->
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category,message in messages %}
+            {% if category == 'error' %}
+            <div class="flash-message">
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                  </div>
+                {% else %}
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                  </div>
+            </div>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+    {% endwith %}
+    
+    <!-- Layout Section -->
+    <div class="container mt-4">
+        <!-- Logout Button and Welcome Message -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <!-- Welcome Message -->
+            <h1>Welcome {{ session.get('mail') }}!</h1>
+            <!-- Logout Button -->
+            <form action="/logout" method="get">
+                <button type="submit" class="btn btn-danger">Log Out</button>
+            </form>
+            
+        </div>
+
+        <!-- Search Bar Section -->
+        <div class="container mt-4">
+            <div class="row justify-content-center">
+                <div class="col-md-6">
+                    <form action="/search" method="post" class="search-form">
+                        <div class="mb-3">
+                            <label for="from" class="form-label">From</label><br>
+                            <select id="from" class="form-control">
+                                <!-- List of airports will go here -->
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="to" class="form-label">To</label><br>
+                            <select id="to" class="form-control">
+                                <!-- List of airports will go here -->
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="departure-date" class="form-label">Departure Date</label>
+                            <input type="date" class="form-control" id="departure-date">
+                        </div>
+                        <div class="mb-3" id="return">
+                            <label for="return-date" class="form-label">Return Date</label>
+                            <input type="date" class="form-control" id="return-date">
+                        </div>
+                        <!-- Checkboxes -->
+                        <div class="row mt-2">
+                            <div class="form-check col-sm-2 text-start">
+                                <input type="checkbox" class="form-check-input" id="directFlight" name="direct_flight">
+                                <label for="directFlight" class="form-check-label small">Direct Flight</label>
+                            </div>
+                            <div class="form-check col-sm-2 text-start">
+                                <input type="checkbox" class="form-check-input" id="student" name="student">
+                                <label for="student" class="form-check-label small">Student</label>
+                            </div>
+                            <div class="form-check col-sm-2 text-start">
+                                <input type="checkbox" class="form-check-input" id="Defence" name="Defence">
+                                <label for="Defence" class="form-check-label small">Defence</label>
+                            </div>
+                            <div class="form-check col-sm-2 text-start">
+                                <input type="checkbox" class="form-check-input" id="seniorCitizen" name="seniorCitizen">
+                                <label for="seniorCitizen" class="form-check-label small">Senior Citizen</label>
+                            </div>
+                            <div class="form-check col-sm-2 text-start">
+                                <input type="checkbox" class="form-check-input" id="roundTrip" name="round_trip">
+                                <label for="roundTrip" class="form-check-label small">Round Trip</label>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <button type="submit" class="btn btn-primary">Search Flights</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <hr>
+    
+        
+
+        
+    </div>
+    
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script>
+
+        // populating to and form fields with cities
+        $(document).ready(function() {
+        var airports = [
+            { id: 'DEL', text: 'Delhi' },
+            { id: 'BOM', text: 'Mumbai' },
+            { id: 'BLR', text: 'Bangalore' },
+            { id: 'JFK', text: 'New York' },
+            { id: 'LHR', text: 'London' },
+            { id: 'SFO', text: 'San Francisco' },
+            { id: 'DXB', text: 'Dubai' },
+            { id: 'HKG', text: 'Hong Kong' },
+            { id: 'SYD', text: 'Sydney' },
+            // Add more airports here as needed
+        ];
+
+        // Initialize Select2 for both "From" and "To" fields
+        $('#from, #to').select2({
+            data: airports,
+            placeholder: 'Search for a city or airport',
+            allowClear: false
+        });
+    });
+
+    </script>
+    <script>
+        // Get checkbox and input elements
+        const checkbox = document.getElementById('roundTrip');
+        const extraInput = document.getElementById('return');
+
+        // Add event listener for the checkbox
+        checkbox.addEventListener('change', () => {
+            // Toggle the visibility of the input based on checkbox state
+            if (checkbox.checked) {
+                extraInput.style.display = 'block'; // Show the input
+            } else {
+                extraInput.style.display = 'none'; // Hide the input
+            }
+        });
+    </script>
+</body>
+</html>

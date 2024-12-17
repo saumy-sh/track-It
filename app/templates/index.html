@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Track It</title>
+    <link rel="icon" href="{{ url_for('static', filename='img/track-32.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+    <section class="top-bar">
+        <nav class="nav-bar">
+            <ul class="nav-list">
+                <li><a href="#">Price</a></li>
+                <li><a href="#">FAQs</a></li>
+                <li><a href="#">Feedback</a></li>
+            </ul>
+        </nav>
+        <div class="login-signup">
+            <form action="/signup" method="get"><button>Sign Up</button></form>
+            <form action="/login" method="get"><button>Log In</button></form>
+        </div>
+    </section>
+    <section class="hero-section">
+        <h1><span>track It</span></h1>
+        <p>A hassle free way of tracking prices</p>
+    </section>
+    
+</body>
+</html>
