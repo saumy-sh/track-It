@@ -15,7 +15,7 @@ import random
 # source,destination,date_from,date_to
 
 TARGET_SITE = "https://www.happyfares.in/?utm_source=Google&campaign_ID=12305358667&pl=&key_word_identifier=happyfares&ad_group_id_identifier=119036993513&gad_source=1&gclid=CjwKCAiA9vS6BhA9EiwAJpnXw_-ZSkoIV7OsWc_cypjmWTjx0_i5LsN3jchfN4Wt16gqmBsTXeZGXBoCHO4QAvD_BwE"
-PATH = 'chromedriver-win64/chromedriver.exe'
+PATH = 'app/static/scripts/chromedriver-win64/chromedriver.exe'
 
 # journey details
 departure_date = "6 01 2025"
@@ -34,7 +34,7 @@ def create_headless_driver():
     chrome_options.add_argument("--disable-blink-features=AutomationControlled")
     # chrome_options.add_argument("--hide-scrollbars")
     chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36")
-    
+    chrome_options.add_argument("--disable-notifications")
 
     service = Service(PATH, log_output="chromedriver.log")
     driver = webdriver.Chrome(service=service, options=chrome_options)
@@ -180,7 +180,15 @@ def seniorCitizen_selector(driver):
         EC.presence_of_element_located((By.XPATH,confirmBtn_xpath))
     ).click()
 
-def cheapest_flight(source,destination,departure_date,option,return_date=None,roundTrip=False):
+def doctorNurses_selector(driver):
+    WebDriverWait(driver,1).until(
+        EC.presence_of_element_located((By.XPATH,"//label[@for='cbDefence3']"))
+    ).click()
+    WebDriverWait(driver,1).until(
+        EC.presence_of_element_located((By.XPATH,confirmBtn_xpath))
+    ).click()
+
+def cheapest_flight(source,destination,departure_date,option,direct=False,return_date=None,roundTrip=False):
     driver = create_headless_driver()
     
     # go to target site
@@ -196,7 +204,8 @@ def cheapest_flight(source,destination,departure_date,option,return_date=None,ro
 
 
     # select direct flight option
-    direct_flight(driver,actions)
+    if direct:
+        direct_flight(driver,actions)
 
 
 
@@ -221,8 +230,10 @@ def cheapest_flight(source,destination,departure_date,option,return_date=None,ro
         student_selector(driver)
     elif option == "defence":
         defence_selector(driver)
-    elif option == "senior citizen":
+    elif option == "senior_citizen":
         seniorCitizen_selector(driver)
+    elif option == "doctors_nurses":
+        doctorNurses_selector(driver)
     else:
         pass
 
@@ -255,19 +266,25 @@ def cheapest_flight(source,destination,departure_date,option,return_date=None,ro
         seats_available = WebDriverWait(driver,10).until(
             EC.presence_of_all_elements_located((By.XPATH,"//span[@class='text ng-binding']"))
         )
-        for i in range(0,5):
+        results = []
+        num = len(flight_nos)
+        # results format: [flight_no with flight name, price, take-off time, land time]
+        for i in range(0,num):
+            results.append([{flight_nos[i].text},prices[i].get_attribute("innerHTML"),time_elements[i*2].text,time_elements[i*2+1].text])
             print(f"Flight No: {flight_nos[i].text}")
             print(f"Price: {prices[i].get_attribute("innerHTML")}") # here .text will not work, hence using get_attribute 
             print(f"Take-off at:{time_elements[i*2].text}    Landing At: {time_elements[i*2+1].text}")
-            print(f"Seats Available: {seats_available[i].text}")
+            # print(f"Seats Available: {seats_available[i].text}")
             print("###############################################")
+        driver.quit()
+        return results
     except TimeoutException:
-        print("No flight available for the given combination. Check inner exception.")
+        driver.quit()
+        return "null"
     
 
-    driver.quit()
 
-cheapest_flight(source,destination,departure_date,"student")
+
 
 
 

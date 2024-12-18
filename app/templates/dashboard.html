@@ -11,6 +11,17 @@
         #return{
             display: none;
         }
+        #loading{
+            display: none;
+        }
+        #results{
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Centers the child divs horizontally */
+            justify-content: center; /* Centers the child divs vertically */
+            gap: 20px; /* Adds space between the flight-info cards */
+            padding: 20px;
+        }
     </style>
 </head>
 <body>
@@ -56,19 +67,19 @@
                     <form action="/search" method="post" class="search-form">
                         <div class="mb-3">
                             <label for="from" class="form-label">From</label><br>
-                            <select id="from" class="form-control">
+                            <select id="from" name="from" class="form-control">
                                 <!-- List of airports will go here -->
                             </select>
                         </div>
                         <div class="mb-3">
                             <label for="to" class="form-label">To</label><br>
-                            <select id="to" class="form-control">
+                            <select id="to" name="to" class="form-control">
                                 <!-- List of airports will go here -->
                             </select>
                         </div>
                         <div class="mb-3">
                             <label for="departure-date" class="form-label">Departure Date</label>
-                            <input type="date" class="form-control" id="departure-date">
+                            <input type="date" class="form-control" id="departure-date" name="departure-date">
                         </div>
                         <div class="mb-3" id="return">
                             <label for="return-date" class="form-label">Return Date</label>
@@ -81,16 +92,20 @@
                                 <label for="directFlight" class="form-check-label small">Direct Flight</label>
                             </div>
                             <div class="form-check col-sm-2 text-start">
-                                <input type="checkbox" class="form-check-input" id="student" name="student">
+                                <input type="radio" class="form-check-input" id="student" name="options" value="student">
                                 <label for="student" class="form-check-label small">Student</label>
                             </div>
                             <div class="form-check col-sm-2 text-start">
-                                <input type="checkbox" class="form-check-input" id="Defence" name="Defence">
+                                <input type="radio" class="form-check-input" id="Defence" name="options" value="defence">
                                 <label for="Defence" class="form-check-label small">Defence</label>
                             </div>
                             <div class="form-check col-sm-2 text-start">
-                                <input type="checkbox" class="form-check-input" id="seniorCitizen" name="seniorCitizen">
+                                <input type="radio" class="form-check-input" id="seniorCitizen" name="options" value="senior_citizen">
                                 <label for="seniorCitizen" class="form-check-label small">Senior Citizen</label>
+                            </div>
+                            <div class="form-check col-sm-2 text-start">
+                                <input type="radio" class="form-check-input" id="doctorsNurse" name="options" value="doctors_nurses">
+                                <label for="doctors_nurse" class="form-check-label small">Doctors & Nurses</label>
                             </div>
                             <div class="form-check col-sm-2 text-start">
                                 <input type="checkbox" class="form-check-input" id="roundTrip" name="round_trip">
@@ -98,13 +113,45 @@
                             </div>
                         </div>
                         <div class="mb-3">
-                            <button type="submit" class="btn btn-primary">Search Flights</button>
+                            <button type="submit" id="search" class="btn btn-primary">Search Flights</button>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
         <hr>
+
+        <section class="search results">
+            <div class="tab-container">
+                <button id="current-search" class="tab active" onclick="switchTab('current-search', 'past-searches')">Current Search</button>
+                <button id="past-searches" class="tab" onclick="switchTab('past-searches', 'current-search')">Past Searches</button>
+            </div>
+            
+            <div id="content-current-search" class="tab-content active-content">
+                <div id="loading">
+                    <img src="{{ url_for('static', filename='img/loading.gif') }}" alt="loading content">
+                    <p>Fetching data. It may take some time. Please wait...</p>
+                </div>
+                <div id="results">
+                    {% if result and result!="null" %}
+                        {% for r in result %}
+                        <div class="flight-info">
+                            <p><strong>Flight No:</strong> <span id="flight-no">{{ r[0] }}</span></p>
+                            <p><strong>Take Off Time:</strong> <span id="takeoff-time">{{ r[2] }}</span></p>
+                            <p><strong>Landing Time:</strong> <span id="landing-time">{{ r[3] }}</span></p>
+                            <p><strong>Price:</strong> <span id="price">{{ r[1] }}</span></p>
+                        </div>
+                        <br>
+                        {% endfor %}
+                    {% elif result=="null" %}
+                        <p class="no-flight">No flights were found for given queries!</p>
+                    {% endif %}
+                </div>
+            </div>
+            <div id="content-past-searches" class="tab-content">
+                <p>This is content for Tab 2.</p>
+            </div>
+        </section>
     
         
 
@@ -141,6 +188,8 @@
 
     </script>
     <script>
+
+        console.log("{{ source }}","{{ destination }}","{{ date }}","{{ options }}","{{ direct_flight }}");
         // Get checkbox and input elements
         const checkbox = document.getElementById('roundTrip');
         const extraInput = document.getElementById('return');
@@ -154,6 +203,29 @@
                 extraInput.style.display = 'none'; // Hide the input
             }
         });
+
+        // loading content handler
+        const searchBtn = document.getElementById('search');
+        const loaderGIF = document.getElementById('loading');
+        const resultElement = document.getElementById('results');
+        searchBtn.addEventListener('click',() => {
+            resultElement.style.display = 'none';
+            loaderGIF.style.display = 'block';
+            
+        })
+
+
+        // searched-results section code
+        function switchTab(activeTabId, inactiveTabId) {
+            // Highlight the clicked tab
+            document.getElementById(activeTabId).classList.add('active');
+            document.getElementById(inactiveTabId).classList.remove('active');
+            
+            // Show the content of the active tab
+            document.getElementById('content-current-search').classList.toggle('active-content', activeTabId === 'current-search');
+            document.getElementById('content-past-searches').classList.toggle('active-content', activeTabId === 'past-searches');
+        }
+
     </script>
 </body>
 </html>

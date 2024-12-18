@@ -6,6 +6,8 @@ from authlib.integrations.flask_client import OAuth
 from dotenv import load_dotenv
 import os
 import secrets
+from app.static.scripts.script import cheapest_flight
+import time
 
 # Load environment variables
 load_dotenv()
@@ -183,4 +185,29 @@ def logout():
 
 @auth.route("/search",methods=["GET","POST"])
 def search():
-    return render_template("dashboard.html")
+    if request.method == "POST":
+        search_query = request.form
+        source = search_query.get("from")
+        destination = search_query.get("to")
+        date = search_query.get("departure-date")
+        direct_flight = search_query.get("direct_flight")
+        option = search_query.get("options")
+        # senior_citizen = search_query.get("senior_citizen")
+        # doctors_nurses = search_query.get("doctors_nurses")
+        print(f"Query data:{source},{destination},{date},{option}")
+        year,month,day = date.split("-")
+        day = int(day)
+        optimised_date = f"{day} {month} {year}"
+        print(optimised_date)
+        if direct_flight == "on":
+            direct_flight = True
+        else:
+            direct_flight = False
+        results = cheapest_flight(source,destination,optimised_date,option,direct_flight)
+    return render_template("dashboard.html",
+                           result = results,
+                           source=source,
+                           destination=destination,
+                           date=date,
+                           option=option,
+                           direct_flight=direct_flight)
