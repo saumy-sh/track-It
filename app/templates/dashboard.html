@@ -41,7 +41,7 @@
         <!-- Logout Button and Welcome Message -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <!-- Welcome Message -->
-            <h1>Welcome {{ session.get('mail') }}!</h1>
+            <h1>Welcome {{ session.get('user') }}!</h1>
             <!-- Logout Button -->
             <form action="/logout" method="get">
                 <button type="submit" class="btn btn-danger">Log Out</button>
