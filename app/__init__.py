@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 import os
 from flask_pymongo import PyMongo,MongoClient
 from flask_mail import Mail
-
+import json
 
 mail = Mail()
 mongo = PyMongo()
@@ -32,6 +32,9 @@ def create_app():
     app.config['MAIL_USE_SSL'] = True
     app.config['MAIL_DEFAULT_SENDER'] = os.getenv("GMAIL-ACCOUNT")
 
+    @app.template_filter('json_loads')
+    def json_loads_filter(s):
+        return json.loads(s)
 
     from .auth import auth,create_oauth
     create_oauth(app)
