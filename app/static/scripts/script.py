@@ -10,6 +10,8 @@ from selenium.common.exceptions import TimeoutException,NoSuchElementException,W
 import time
 import random
 
+returnDate_xpath = "//label[@ng-keyup='DPOnFocus(1);']"
+
 
 
 # source,destination,date_from,date_to
@@ -17,6 +19,27 @@ import random
 TARGET_SITE = "https://www.happyfares.in/?utm_source=Google&campaign_ID=12305358667&pl=&key_word_identifier=happyfares&ad_group_id_identifier=119036993513&gad_source=1&gclid=CjwKCAiA9vS6BhA9EiwAJpnXw_-ZSkoIV7OsWc_cypjmWTjx0_i5LsN3jchfN4Wt16gqmBsTXeZGXBoCHO4QAvD_BwE"
 PATH = 'app/static/scripts/chromedriver-win64/chromedriver.exe'
 RETRY_ATTEMPT = 3
+
+
+def date_optimiser(date):
+    year,month,day = date.split("-")
+    day = int(day)
+    return f"{day} {month} {year}"
+
+def extract_number(price_str):
+    """
+    Extracts the numeric value from a currency string and removes commas.
+
+    :param price_str: The string containing the currency value (e.g., "₹ 5,546.00")
+    :return: A float representing the numeric value
+    """
+    # Remove any non-numeric characters except periods and commas
+    numeric_part = ''.join(char for char in price_str if char.isdigit() or char == '.')
+    # Remove commas
+    numeric_part = numeric_part.replace(',', '')
+    return float(numeric_part)
+
+
 
 
 def create_headless_driver():
@@ -126,16 +149,18 @@ def date_selector(date,driver,xpath,date_type):
         date_xpath = f'//td[@id="spnselectdate_{day}{month}{year}1"]'
     while not month_present:
         try:
-            WebDriverWait(driver,5).until(
-                EC.element_to_be_clickable((By.XPATH,date_xpath))
-            ).click()
+            date_element = WebDriverWait(driver,15).until(
+                EC.presence_of_element_located((By.XPATH,date_xpath))
+            )
+            date_element.click()
             month_present = True
         except TimeoutException:
             driver.save_screenshot("err.png")
             next_btn_xpath = "//span[@class='right']"
-            WebDriverWait(driver,5).until(
-                EC.element_to_be_clickable((By.XPATH,next_btn_xpath))
-            ).click()
+            next_btn_elmnt = WebDriverWait(driver,5).until(
+                EC.presence_of_element_located((By.XPATH,next_btn_xpath))
+            )
+            next_btn_elmnt.click()
             time.sleep(0.2)
 
 def round_trip(driver):
@@ -180,7 +205,7 @@ def doctorNurses_selector(driver):
         EC.presence_of_element_located((By.XPATH,confirmBtn_xpath))
     ).click()
 
-def cheapest_flight(source,destination,departure_date,option,direct=False,return_date=None,roundTrip=False):
+def cheapest_flight(source,destination,departure_date,option,direct=False):
     results = {"value":"null"}
     try:
         driver = create_headless_driver()
@@ -231,11 +256,7 @@ def cheapest_flight(source,destination,departure_date,option,direct=False,return
             print("No option selected")
 
 
-        returnDate_xpath = "//label[@ng-keyup='DPOnFocus(1);']"
-        if roundTrip:
-            round_trip(driver)
-            date_selector(departure_date,driver,departureDate_xpath,"dep")
-            date_selector(return_date,driver,returnDate_xpath,"ret")
+        
 
         # clicking Search button
         WebDriverWait(driver,2).until(
@@ -262,7 +283,8 @@ def cheapest_flight(source,destination,departure_date,option,direct=False,return
             # seats_available = WebDriverWait(driver,10).until(
             #     EC.presence_of_all_elements_located((By.XPATH,"//span[@class='text ng-binding']"))
             # )
-            
+
+
             num = len(flight_nos)
             print("time:",len(time_elements))
             print("flights:",num)
@@ -294,6 +316,77 @@ def cheapest_flight(source,destination,departure_date,option,direct=False,return
         return results["value"]
     
     
+    
+# tracker for flight prices
+def price_tracker(driver,tracker_data):
+    
+    try:
+        
+        driver.get(TARGET_SITE)
+        driver.implicitly_wait(10)
+        # creating cursor like element
+        actions = ActionChains(driver)
+
+        # select one-way flight
+        one_way(driver,actions)
+        print("one")
+        # selecting source
+        source_selector(tracker_data["source"],driver) 
+        print("two")
+        # selecting destination 
+        destination_selector(tracker_data["destination"],driver)
+        print("three")
+        # selecting departure date
+        departureDate_xpath = "//label[@ng-keyup='DPOnFocus(0);']"
+        date_selector(date_optimiser(tracker_data["date"]),driver,departureDate_xpath,"dep")
+        print("four")
+        # clicking Search button
+        WebDriverWait(driver,2).until(
+            EC.presence_of_element_located((By.XPATH,"//input[@value='Search']"))
+        ).click()
+
+        # selecting flight info that we need
+        
+        # print(f"time_elements: {time_elements}")
+        print("five")
+        time.sleep(10)
+        flight_nos = WebDriverWait(driver,30).until(
+            EC.presence_of_all_elements_located((By.XPATH,"//p[@class='mb-0 d-inline d-lg-block responsive-bold ng-binding']"))
+        )
+        print("six")
+        # print(f"flight_nos:{flight_nos}")
+        prices = WebDriverWait(driver,30).until(
+            EC.presence_of_all_elements_located((By.XPATH,'//p[@class="font-weight-600 text-gray lbl-bold roboto_font mb-0 ng-binding lbl-huge"]'))
+        )
+        print("seven")
+        num = len(flight_nos)
+        print("flights:",num)
+        
+        for i in range(0,num):
+            print(flight_nos[i].text)
+            if tracker_data["flight_no"] == flight_nos[i].text:
+                print("found")
+                float_price_new = extract_number(prices[i].get_attribute("innerHTML"))
+                float_price_old = extract_number(tracker_data["price"])
+                if float_price_new > float_price_old:
+                    tracker_data["price"] = prices[i].get_attribute("innerHTML")
+                    tracker_data["price_change"]="up"
+                    return tracker_data
+                elif float_price_new < float_price_old:
+                    tracker_data["price"] = prices[i].get_attribute("innerHTML")
+                    tracker_data["price_change"]="down"
+                    return tracker_data
+                else:
+                    tracker_data["price_change"]="neutral"
+                    return tracker_data
+                
+        
+
+
+    except Exception as e:
+        print(f"A big error occured:{e}")
+        
+        return "error"
     
 
 

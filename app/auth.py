@@ -1,12 +1,12 @@
 from flask import Blueprint, request, jsonify, flash, session, redirect, url_for, render_template
 from flask_mail import Message
-from . import mail, mongo
+from . import mail, mongo, scheduler
 from .model import User
 from authlib.integrations.flask_client import OAuth
 from dotenv import load_dotenv
 import os
 import secrets
-from app.static.scripts.script import cheapest_flight,create_headless_driver
+from app.static.scripts.script import cheapest_flight,price_tracker,date_optimiser,create_headless_driver
 import json
 from bson.json_util import dumps
 import asyncio
@@ -59,9 +59,6 @@ def test_connection():
     return None
 
 
-# converting price to integer format
-def convert_price(str):
-    return str.split()[-1].replace(",","").split(".")[0]
 
 
 async def run_with_timeout(func, timeout, driver, source, destination, departure_date, option, direct=False):
@@ -221,10 +218,8 @@ def search():
                 except Exception as e:
                     print(f"An error occured:{e}")
             userdata = mongo.db.usersearch.find({"email":email},{"_id":0,"email":0})  
-
-        year,month,day = date.split("-")
-        day = int(day)
-        optimised_date = f"{day} {month} {year}"
+        optimised_date = date_optimiser(date)
+        
         print(optimised_date)
         if direct_flight == "on":
             direct_flight = True
@@ -265,4 +260,48 @@ def search():
                            date=date,
                            option=option,
                            direct_flight=direct_flight)
+
+
+"""
+
+@scheduler.task("cron",id="update_price",hour=19,minute=56)
+def update_price():
+    with app.app_context():
+        tracker_data = mongo.db.usersearch.find()
+        results = []
+        for data in tracker_data:
+            print(data)
+            driver = create_headless_driver()
+            results.append(price_tracker(driver,data))
+            driver.quit()
+            print(results)
+
+        
+    
+        if results!="error":
+            try:
+                for data in results:
+                    if data["price_change"] == "up":
+                        subject = dumps(f"Flight no:{data["flight_no"]} from {data["source"]} to {data["destination"]} price increased!")
+                    elif data["price_change"] == "down":
+                        subject = dumps(f"Flight no:{data["flight_no"]} from {data["source"]} to {data["destination"]} price decreased!")
+                    else:
+                        subject = dumps(f"Flight no:{data["flight_no"]} from {data["source"]} to {data["destination"]}")
+                    message_body = dumps(f"Flight no:{data["flight_no"]} from {data["source"]} to {data["destination"]} taking off on {data["date"]} at {data["take_off"]} and landing at {data["landing_at"]} costs {data["price"]}.")
+                    recipient_mail = dumps(data["email"])
+                    msg = Message(
+                        subject=subject,
+                        recipients = [recipient_mail],
+                        body=message_body
+                    )
+                    mail.send(msg)
+                    print(f"Mail sent to {recipient_mail} :)")
+            except Exception as e:
+                print(f"An error occured:{e}")
+        else:
+            print("bhai gadbad ho gai!")
+
+"""
+
+
 
