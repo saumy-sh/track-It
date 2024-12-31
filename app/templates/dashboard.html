@@ -79,7 +79,7 @@
                         </div>
                         <div class="mb-3">
                             <label for="departure-date" class="form-label">Departure Date</label>
-                            <input type="date" class="form-control" id="departure-date" name="departure-date">
+                            <input type="date" class="form-control" id="departure-date" name="departure-date" required value="">
                         </div>
                         <div class="mb-3" id="return">
                             <label for="return-date" class="form-label">Return Date</label>
@@ -112,6 +112,10 @@
                                 <label for="roundTrip" class="form-check-label small">Round Trip</label>
                             </div>
                         </div>
+                        <!-- handling which searches to be tracked -->
+                        <input type="hidden" id="trackerStorage" name="trackerStorage"> 
+                        <!-- handling which trackers to  be removed -->
+                        <input type="hidden" id="remove_trackers" name="remove_trackers"> 
                         <div class="mb-3">
                             <button type="submit" id="search" class="btn btn-primary">Search Flights</button>
                         </div>
@@ -133,23 +137,54 @@
                     <p>Fetching data. It may take some time. Please wait...</p>
                 </div>
                 <div id="results">
-                    {% if result and result!="null" %}
-                        {% for r in result %}
+                    {% if result and result!="null" and result!="error" and result!="timeout" %}
+                        {% for flight in result %}
                         <div class="flight-info">
-                            <p><strong>Flight No:</strong> <span id="flight-no">{{ r[0] }}</span></p>
-                            <p><strong>Take Off Time:</strong> <span id="takeoff-time">{{ r[2] }}</span></p>
-                            <p><strong>Landing Time:</strong> <span id="landing-time">{{ r[3] }}</span></p>
-                            <p><strong>Price:</strong> <span id="price">{{ r[1] }}</span></p>
+                            <p><strong>Flight No:</strong> <span id="flight-no">{{ flight[0] }}</span></p>
+                            <p><strong>Take Off Time:</strong> <span id="takeoff-time">{{ flight[2] }}</span></p>
+                            <p><strong>Landing Time:</strong> <span id="landing-time">{{ flight[3] }}</span></p>
+                            <p><strong>Price:</strong> <span id="price">{{ flight[1] }}</span></p>
+                            <input type="checkbox" name="tracker" value="{{ loop.index0 }}" onclick="addTracker(this)">
+                            <label for="tracker">Track It</label>
                         </div>
                         <br>
                         {% endfor %}
                     {% elif result=="null" %}
                         <p class="no-flight">No flights were found for given queries!</p>
+                    {% elif result=="error" %}
+                        <p class="error">An Internal Error occured!</p>
+                    {% elif result=="timeout" %}
+                        <p class="timeout">Request timed out.Server took too long to respond!</p>
                     {% endif %}
                 </div>
             </div>
             <div id="content-past-searches" class="tab-content">
-                <p>This is content for Tab 2.</p>
+                <div class="results">
+                    {% set tracked_search = session["tracked_search"] | json_loads %}
+                    {% if tracked_search!=[] %}
+                    {% for search in tracked_search %}
+                    <div class="flight-info">
+                    
+                        <p><strong>Date:</strong> <span id="date">{{ search["date"] }}</span></p>
+                        <p><strong>Flight No:</strong> <span id="flight-no">{{ search["flight_no"] }}</span></p>
+                        <p><strong>Take Off Time:</strong> <span id="takeoff-time">{{ search["take_off"] }}</span></p>
+                        <p><strong>Take Off From:</strong> <span id="source">{{ search["source"] }}</span></p>
+                        <p><strong>Landing Time:</strong> <span id="landing-time">{{ search["landing_at"] }}</span></p>
+                        <p><strong>Landing At:</strong> <span id="destination">{{ search["destination"] }}</span></p>
+                        <p><strong>Price:</strong> <span id="price">{{ search["price"] }}</span></p>
+                        <input type="checkbox" name="tracker" value="{{ loop.index0 }}" onclick="removeTracker(this)" checked>
+                        <label for="tracker">Track It</label>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                        <p>Nothing to show here.</p>
+                    {% endif %}
+                </div>
+                
+
+
+
+
             </div>
         </section>
     
@@ -162,34 +197,78 @@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     <script>
+        // site variables
+        var trackersList = [];
+        var removeTrackerList = [];
+        // Decode HTML entities
+        function decodeHtmlEntities(str) {
+            if ("{{ result }}" != "timeout" && "{{ result }}" != "null" && "{{ result }}" != "error" && str !== '{{ session["tracked_search"]|tojson|safe }}'){
+                let cleanedData = str.replace(/&#39;/g, '"')
+                console.log("first");
+                console.log(cleanedData);
+                return JSON.parse(cleanedData);
+            }else if(str === '{{ session["tracked_search"]|tojson|safe }}'){
+                let cleanedData = str.replace(/^"|"$/g, '')
+                console.log("second");
+                console.log(cleanedData);
+                return JSON.parse(cleanedData)
+            }else{
+                return str
+            }
+            
+        }
 
-        // populating to and form fields with cities
-        $(document).ready(function() {
-        var airports = [
-            { id: 'DEL', text: 'Delhi' },
-            { id: 'BOM', text: 'Mumbai' },
-            { id: 'BLR', text: 'Bangalore' },
-            { id: 'JFK', text: 'New York' },
-            { id: 'LHR', text: 'London' },
-            { id: 'SFO', text: 'San Francisco' },
-            { id: 'DXB', text: 'Dubai' },
-            { id: 'HKG', text: 'Hong Kong' },
-            { id: 'SYD', text: 'Sydney' },
-            // Add more airports here as needed
-        ];
+        // parsed and cleaned lists
+        let queryResult = decodeHtmlEntities("{{ result }}")
+        let pastSearchList = decodeHtmlEntities('{{ session["tracked_search"]|tojson|safe }}');
 
-        // Initialize Select2 for both "From" and "To" fields
-        $('#from, #to').select2({
-            data: airports,
-            placeholder: 'Search for a city or airport',
-            allowClear: false
+
+
+
+        
+
+        // limit accessible date
+        const departureDate = document.getElementById('departure-date');
+        const currentDate = new Date().toISOString().split('T')[0];
+        departureDate.setAttribute('min',currentDate);
+        console.log("{{ source }}","{{ destination }}","{{ date }}","{{ option }}","{{ direct_flight }}");
+        
+        if ("{{ date }}"){
+            departureDate.setAttribute('value',"{{ date }}");
+        }else{
+
+            departureDate.setAttribute('value',currentDate);
+        };
+        const studentElmnt = document.getElementById('student');
+        const defenceElmnt = document.getElementById('defence');
+        const seniorCitizenElmnt = document.getElementById('seniorCitizen');
+        const doctorsNursesElmnt = document.getElementById('doctorsNurse');
+        directFlight = document.getElementById('directFlight');
+        selectedOption = "{{ option }}";
+
+        if (selectedOption == "student"){
+            studentElmnt.checked = true;
+        } else if (selectedOption == "defence"){
+            defenceElmnt.checked = true;
+        } else if (selectedOption == "senior_citizen"){
+            seniorCitizenElmnt.checked = true;
+        } else if (selectedOption == "doctors_nurses"){
+            doctorsNursesElmnt.checked = true;
+        };
+        if ("{{ direct_flight }}" == "True"){
+            directFlight.checked = true;
+        }
+
+        // deselect feature of radio buttons
+        document.querySelectorAll('input[name="options"]').forEach(radio => {
+            radio.addEventListener("click",function(){
+                if (this.checked){
+                    this.checked = false;
+                }
+            });
         });
-    });
 
-    </script>
-    <script>
 
-        console.log("{{ source }}","{{ destination }}","{{ date }}","{{ options }}","{{ direct_flight }}");
         // Get checkbox and input elements
         const checkbox = document.getElementById('roundTrip');
         const extraInput = document.getElementById('return');
@@ -224,7 +303,68 @@
             // Show the content of the active tab
             document.getElementById('content-current-search').classList.toggle('active-content', activeTabId === 'current-search');
             document.getElementById('content-past-searches').classList.toggle('active-content', activeTabId === 'past-searches');
+             
         }
+
+
+        // get tracker for checked flight tags
+        
+        function addTracker(item) {
+            if (item.checked){
+                trackersList.push(queryResult[Number(item.value)]);
+
+            }else{
+                trackersList = trackersList.filter((value,index) => index !== Number(item.value));
+            };
+            const trackerInput=document.getElementById("trackerStorage");
+            trackerInput.value = JSON.stringify(trackersList);
+            console.log(trackerInput.value);
+        };
+        
+        // remove tracker
+        function removeTracker(item){
+            if (!item.checked){
+                removeTrackerList.push(pastSearchList[Number(item.value)]);
+
+            }else{
+                removeTrackerList = removeTrackerList.filter((value,index) => index === Number(item.value));
+            };
+            const removeTrackerInput=document.getElementById("remove_trackers");
+            removeTrackerInput.value = JSON.stringify(removeTrackerList);
+            console.log(removeTrackerInput.value);
+
+        }
+        
+        // populating to and form fields with cities
+        $(document).ready(function() {
+            var airports = [
+                { id: 'DEL', text: 'Delhi' },
+                { id: 'BOM', text: 'Mumbai' },
+                { id: 'BLR', text: 'Bangalore' },
+                { id: 'JFK', text: 'New York' },
+                { id: 'LHR', text: 'London' },
+                { id: 'SFO', text: 'San Francisco' },
+                { id: 'DXB', text: 'Dubai' },
+                { id: 'HKG', text: 'Hong Kong' },
+                { id: 'SYD', text: 'Sydney' },
+                // Add more airports here as needed
+            ];
+
+            // Initialize Select2 for both "From" and "To" fields
+            $('#from, #to').select2({
+                data: airports,
+                placeholder: 'Search for a city or airport',
+                allowClear: false
+            });
+            if ("{{ source }}" && "{{ destination }}") {
+            // Wait for Select2 to initialize and then set the values
+                $('#from').val("{{ source }}").trigger('change');
+                $('#to').val("{{ destination }}").trigger('change');
+            }
+        });
+            
+
+       
 
     </script>
 </body>

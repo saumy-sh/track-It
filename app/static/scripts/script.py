@@ -181,7 +181,7 @@ def doctorNurses_selector(driver):
     ).click()
 
 def cheapest_flight(source,destination,departure_date,option,direct=False,return_date=None,roundTrip=False):
-    results = {"value":None}
+    results = {"value":"null"}
     try:
         driver = create_headless_driver()
         # go to target site
@@ -248,39 +248,52 @@ def cheapest_flight(source,destination,departure_date,option,direct=False,return
             time_elements = WebDriverWait(driver,30).until(
                 EC.presence_of_all_elements_located((By.XPATH,"//p[@class='mb-0 lbl-bold ng-binding lbl-huge']"))
             )
-            flight_nos = WebDriverWait(driver,20).until(
+            # print(f"time_elements: {time_elements}")
+
+            flight_nos = WebDriverWait(driver,30).until(
                 EC.presence_of_all_elements_located((By.XPATH,"//p[@class='mb-0 d-inline d-lg-block responsive-bold ng-binding']"))
             )
-            prices = WebDriverWait(driver,20).until(
+
+            # print(f"flight_nos:{flight_nos}")
+            prices = WebDriverWait(driver,30).until(
                 EC.presence_of_all_elements_located((By.XPATH,'//p[@class="font-weight-600 text-gray lbl-bold roboto_font mb-0 ng-binding lbl-huge"]'))
             )
+            # print(f"prices:{prices}")
             # seats_available = WebDriverWait(driver,10).until(
             #     EC.presence_of_all_elements_located((By.XPATH,"//span[@class='text ng-binding']"))
             # )
             
             num = len(flight_nos)
+            print("time:",len(time_elements))
+            print("flights:",num)
+            
             result_value = []
+            if num > 10 or len(time_elements) > 2*num:
+                num = min(10,len(time_elements)//2)
+            print(num)
             # results format: [flight_no with flight name, price, take-off time, land time]
             for i in range(0,num):
                 result_value.append([flight_nos[i].text,prices[i].get_attribute("innerHTML"),time_elements[i*2].text,time_elements[i*2+1].text])
-                # print(f"Flight No: {flight_nos[i].text}")
-                # print(f"Price: {prices[i].get_attribute("innerHTML")}") # here .text will not work, hence using get_attribute 
-                # print(f"Take-off at:{time_elements[i*2].text}    Landing At: {time_elements[i*2+1].text}")
-                # # print(f"Seats Available: {seats_available[i].text}")
-                # print("###############################################")
+                print(f"Flight No: {flight_nos[i].text}")
+                print(f"Price: {prices[i].get_attribute("innerHTML")}") # here .text will not work, hence using get_attribute 
+                print(f"Take-off at:{time_elements[i*2].text}    Landing At: {time_elements[i*2+1].text}")
+                # print(f"Seats Available: {seats_available[i].text}")
+                print("###############################################")
         
             results["value"] = result_value
         except TimeoutException:
             driver.save_screenshot("err.png")
             results["value"] = "null"
+        driver.quit()
+        return results["value"]
         
 
     except WebDriverException:
         results["value"] = "error"
-    
-    finally:
         driver.quit()
         return results["value"]
+    
+    
     
 
 

@@ -179,11 +179,11 @@ def search():
         direct_flight = search_query.get("direct_flight")
         option = search_query.get("options")
         trackerList = search_query.get("trackerStorage")
-        removeTrackerList = search_query.get("remove_searches")
+        removeTrackerList = search_query.get("remove_trackers")
         email = session.get("mail")
         # senior_citizen = search_query.get("senior_citizen")
         # doctors_nurses = search_query.get("doctors_nurses")
-        print(f"Query data:{source},{destination},{date},{option},{trackerList}")
+        print(f"Query data:{source},{destination},{date},{option},{trackerList},{removeTrackerList}")
         if trackerList:
             flight_infos = json.loads(trackerList)
             # print(f"Flight info:{flight_infos}")
@@ -209,7 +209,7 @@ def search():
         if removeTrackerList:
             remove_tracker = json.loads(removeTrackerList)
             for flight in remove_tracker:
-                print(flight["date"])
+                print(flight["date"],email,flight["flight_no"])
                 try:
                     deleted_result = mongo.db.usersearch.delete_one(
                         {"email":email,
@@ -238,8 +238,6 @@ def search():
             except TimeoutError:
                 return "timeout"
         results = asyncio.run(run_script())
-        if not results:
-            results="null"
         print(f"The fetched data is: {results}")
 
         # print(results)
