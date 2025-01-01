@@ -15,6 +15,10 @@
             display: none;
             margin-top: 4rem;
         }
+        #starting{
+            display: block;
+            margin-top: 4rem;
+        }
         #results{
             display: flex;
             flex-direction: column;
@@ -59,6 +63,11 @@
                 <button type="submit" class="btn btn-danger">Log Out</button>
             </form>
             
+        </div>
+
+        <!-- Description Paragraph -->
+        <div class="text-center">
+            <p>✈️ Welcome to your flight dashboard! 🌍 Here, you can easily search for flights to your favorite destinations, compare prices, and even track flight prices over time. 📊 Stay updated on price changes with our tracking feature and never miss a great deal! 💸 Start exploring now and let us help you plan your next adventure hassle-free! 🚀</p>
         </div>
 
         <!-- Search Bar Section -->
@@ -139,6 +148,11 @@
             </div>
             
             <div id="content-current-search" class="tab-content active-content">
+                <div id="starting">
+                    {% if not result %}
+                        <p>Your Dream Adventure Awaits! 🌟 Pack your bags, because an unforgettable trip is just around the corner! ✈️</p>
+                    {% endif %}
+                    </div>
                 <div id="loading">
                     <img src="{{ url_for('static', filename='img/loading.gif') }}" alt="loading content">
                     <p>Fetching data. It may take some time. Please wait...</p>
@@ -146,14 +160,37 @@
                 <div id="results">
                     {% if result and result!="null" and result!="error" and result!="timeout" %}
                         {% for flight in result %}
-                        <div class="flight-info">
-                            <p><strong>Flight No:</strong> <span id="flight-no">{{ flight[0] }}</span></p>
-                            <p><strong>Take Off Time:</strong> <span id="takeoff-time">{{ flight[2] }}</span></p>
-                            <p><strong>Landing Time:</strong> <span id="landing-time">{{ flight[3] }}</span></p>
-                            <p><strong>Price:</strong> <span id="price">{{ flight[1] }}</span></p>
-                            <input type="checkbox" name="tracker" value="{{ loop.index0 }}" onclick="addTracker(this)">
-                            <label for="tracker">Track It</label>
+                        
+                        <div class="flight-info" style="display: flex; flex-direction: column; gap: 10px; border: 1px solid #ccc; padding: 20px; border-radius: 5px; width: 800px; margin: 0 auto;">
+                            <!-- Flight No -->
+                            <p style="text-align: left; font-size: 1.2rem;">
+                                ✈️ <strong>Flight No:</strong> <span id="flight-no">{{ flight[0] }}</span>
+                            </p>
+                        
+                            <!-- Take-Off and Landing Time -->
+                            <div style="display: flex; justify-content: space-between; font-size: 1rem;">
+                                <div style="display: flex; gap: 10px;">
+                                    ⏰ <strong>Take Off:</strong> <span id="takeoff-time">{{ flight[2] }}</span>
+                                </div>
+                                <div style="display: flex; gap: 10px;">
+                                    ⏳ <strong>Landing:</strong> <span id="landing-time">{{ flight[3] }}</span>
+                                </div>
+                            </div>
+                        
+                            <!-- Price and Tracking -->
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <input type="checkbox" name="tracker" value="{{ loop.index0 }}" onclick="addTracker(this)">
+                                    <label for="tracker"><strong>Track It</strong></label>
+                                </div>
+                                <p style="font-size: 1.2rem; font-weight: bold;">
+                                    💰 <strong>Price:</strong> <span id="price">{{ flight[1] }}</span>
+                                </p>
+                            </div>
                         </div>
+                        
+                            
+                        
                         <br>
                         {% endfor %}
                     {% elif result=="null" %}
@@ -170,18 +207,41 @@
                     {% set tracked_search = session["tracked_search"] | json_loads %}
                     {% if tracked_search!=[] %}
                     {% for search in tracked_search %}
-                    <div class="flight-info">
+                    <div class="flight-info" style="display: flex; flex-direction: column; gap: 10px; border: 1px solid #ccc; padding: 20px; border-radius: 5px; width: 800px; margin: 0 auto;">
+                        <!-- Date -->
+                        <p style="text-align: left; font-size: 1.2rem;">
+                            📅 <strong>Date:</strong> <span id="date">{{ search["date"] }}</span>
+                        </p>
                     
-                        <p><strong>Date:</strong> <span id="date">{{ search["date"] }}</span></p>
-                        <p><strong>Flight No:</strong> <span id="flight-no">{{ search["flight_no"] }}</span></p>
-                        <p><strong>Take Off Time:</strong> <span id="takeoff-time">{{ search["take_off"] }}</span></p>
-                        <p><strong>Take Off From:</strong> <span id="source">{{ search["source"] }}</span></p>
-                        <p><strong>Landing Time:</strong> <span id="landing-time">{{ search["landing_at"] }}</span></p>
-                        <p><strong>Landing At:</strong> <span id="destination">{{ search["destination"] }}</span></p>
-                        <p><strong>Price:</strong> <span id="price">{{ search["price"] }}</span></p>
-                        <input type="checkbox" name="tracker" value="{{ loop.index0 }}" onclick="removeTracker(this)" checked>
-                        <label for="tracker">Track It</label>
+                        <!-- Flight No -->
+                        <p style="text-align: left; font-size: 1.2rem;">
+                            ✈️ <strong>Flight No:</strong> <span id="flight-no">{{ search["flight_no"] }}</span>
+                        </p>
+                    
+                        <!-- Take Off Time and Source -->
+                        <div style="display: flex; justify-content: space-between; font-size: 1rem;">
+                            ⏰ <strong>Take Off:</strong> <span id="takeoff-time">{{ search["take_off"] }}</span>
+                            🛫 <strong>From:</strong> <span id="source">{{ search["source"] }}</span>
+                        </div>
+                    
+                        <!-- Landing Time and Destination -->
+                        <div style="display: flex; justify-content: space-between; font-size: 1rem;">
+                            ⏳ <strong>Landing:</strong> <span id="landing-time">{{ search["landing_at"] }}</span>
+                            🛬 <strong>At:</strong> <span id="destination">{{ search["destination"] }}</span>
+                        </div>
+                    
+                        <!-- Price and Tracking -->
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <input type="checkbox" name="tracker" value="{{ loop.index0 }}" onclick="removeTracker(this)" checked>
+                                <label for="tracker"><strong>Track It</strong></label>
+                            </div>
+                            <p style="font-size: 1.2rem; font-weight: bold;">
+                                💰 <strong>Price:</strong> <span id="price">{{ search["price"] }}</span>
+                            </p>
+                        </div>
                     </div>
+                    
                     {% endfor %}
                     {% else %}
                         <p>Nothing to show here.</p>
@@ -300,14 +360,15 @@
         const searchBtn = document.getElementById('search');
         const loaderGIF = document.getElementById('loading');
         const resultElement = document.getElementById('results');
+        const startingElmnt = document.getElementById('starting');
         searchBtn.addEventListener('click',() => {
             switchTab('current-search','past-searches');
             resultElement.style.display = 'none';
+            startingElmnt.style.display = 'none';
             loaderGIF.style.display = 'block';
             loaderGIF.scrollIntoView({"behavior":"smooth"});
             
-        })
-
+        });
 
         // searched-results section code
         function switchTab(activeTabId, inactiveTabId) {

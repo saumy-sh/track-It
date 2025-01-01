@@ -45,16 +45,14 @@
 }
 .flight-info{
     background-color: #f4f4f9;
-    border: 1px solid #ddd;
-    padding: 20px;
-    width: 800px;
+    
+    
     border-radius: 5px;
     text-align: left; /* Aligns text inside the flight-info div */
     background-color: #f4f4f9;
     border: 1px solid #ddd;
     padding: 20px;
     border-radius: 5px;
-    text-align: left; /* Aligns text inside the flight-info div */
 }
 .flight-info p {
     font-size: 16px;

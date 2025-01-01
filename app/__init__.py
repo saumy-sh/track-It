@@ -54,7 +54,7 @@ def create_app():
     scheduler.init_app(app)
     scheduler.start()
 
-    @scheduler.task("cron",id="update_price",hour=21,minute=5)
+    @scheduler.task("cron",id="update_price",hour=1,minute=51)
     def update_price():
         with app.app_context():
             tracker_data = mongo.db.usersearch.find()
@@ -81,16 +81,28 @@ def create_app():
                                                                     "landing_at":data["landing_at"]   
                                                                 }
                                                             })
-                            print("reached here")
+                            
                             if data["trackCheap"]:
-                                subject = dumps(f"Cheapest flight for {data["date"]} from {data["source"]} to {data["destination"]} is {data["flight_no"]}")
+                                subject = f"✨ Hot Deal Alert! ✈️ Cheapest Flight on {data["date"]}: {data["flight_no"]} from {data["source"]} to {data["destination"]}! 💸"
                             elif data["price_change"] == "up":
-                                subject = dumps(f"Flight no:{data["flight_no"]} from {data["source"]} to {data["destination"]} price increased!")
+                                subject = f"Price Spike Alert! 🚀 Flight {data["flight_no"]} from {data["source"]} to {data["destination"]} Just Got More Expensive! 💰"
                             elif data["price_change"] == "down":
-                                subject = dumps(f"Flight no:{data["flight_no"]} from {data["source"]} to {data["destination"]} price decreased!")
+                                subject = f"Great News! ✈️ Flight {data["flight_no"]} from {data["source"]} to {data["destination"]} is Now Cheaper! 🎉"
                             else:
-                                subject = dumps(f"Flight no:{data["flight_no"]} from {data["source"]} to {data["destination"]}")
-                            message_body = dumps(f"Flight no:{data["flight_no"]} from {data["source"]} to {data["destination"]} taking off on {data["date"]} at {data["take_off"]} and landing at {data["landing_at"]} costs {data["price"].replace("\u20b9","₹")}.")
+                                pass
+                            message_body = f"""
+                            Flight Details ✈️
+
+                            Flight Number: {data["flight_no"]}
+                            Route: {data["source"]} ➡️ {data["destination"]}
+                            Date: {data["date"]}
+                            Take Off: {data["take_off"]}
+                            Landing Time: {data["landing_at"]}
+
+                            💸 Current Price: {data["price"].replace("\\u20b9", "₹")}
+
+                            Safe travels! ✈️
+                            """                            
                             recipient_mail = [data["email"]]
                             msg = Message(
                                 subject=subject,

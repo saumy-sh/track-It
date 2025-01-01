@@ -160,7 +160,7 @@ def dashboard():
 
 @auth.route("logout",methods=["GET"])
 def logout():
-    if session["flight_task"]:
+    if "flight_task" in session:
         task = session["flight_task"]
         if not task.done():
             task.cancel()
@@ -170,7 +170,6 @@ def logout():
     else:
         print("not found!!")
     session.clear()
-    flash("Logged out successfully!","message")
     return render_template("index.html")
 
 
@@ -243,12 +242,14 @@ def search():
                 return "timeout"
             
         # creating task for flight search for monitoring purpose
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        task = loop.create_task(run_script())
-        session['flight_task'] = task
-        print("flight task stored:",session["flight_task"])
-        results = loop.run_until_complete(run_script())
+        # loop = asyncio.new_event_loop()
+        # asyncio.set_event_loop(loop)
+        # task = loop.create_task(run_script())
+        # session['flight_task'] = task
+        # session['test'] = "test"
+        # session.modified = True
+        # print("flight task stored:",session["flight_task"])
+        results = asyncio.run(run_script())
         # print(f"The fetched data is: {results}")
 
         if track_cheap:
