@@ -9,6 +9,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException,NoSuchElementException,WebDriverException
 import time
 import random
+from datetime import datetime
 
 returnDate_xpath = "//label[@ng-keyup='DPOnFocus(1);']"
 
@@ -39,8 +40,16 @@ def extract_number(price_str):
     numeric_part = numeric_part.replace(',', '')
     return float(numeric_part)
 
-
-
+# to check if the day has passed
+def check_date(date):
+    strp_date = datetime.strptime(date,"%Y-%m-%d")
+    current_date = datetime.now()
+    print(current_date)
+    print(strp_date)
+    if strp_date < current_date:
+        return False
+    else:
+        return True
 
 def create_headless_driver():
     chrome_options = Options()
@@ -296,11 +305,11 @@ def cheapest_flight(source,destination,departure_date,option,direct=False):
             # results format: [flight_no with flight name, price, take-off time, land time]
             for i in range(0,num):
                 result_value.append([flight_nos[i].text,prices[i].get_attribute("innerHTML"),time_elements[i*2].text,time_elements[i*2+1].text])
-                print(f"Flight No: {flight_nos[i].text}")
-                print(f"Price: {prices[i].get_attribute("innerHTML")}") # here .text will not work, hence using get_attribute 
-                print(f"Take-off at:{time_elements[i*2].text}    Landing At: {time_elements[i*2+1].text}")
-                # print(f"Seats Available: {seats_available[i].text}")
-                print("###############################################")
+                # print(f"Flight No: {flight_nos[i].text}")
+                # print(f"Price: {prices[i].get_attribute("innerHTML")}") # here .text will not work, hence using get_attribute 
+                # print(f"Take-off at:{time_elements[i*2].text}    Landing At: {time_elements[i*2+1].text}")
+                # # print(f"Seats Available: {seats_available[i].text}")
+                # print("###############################################")
         
             results["value"] = result_value
         except TimeoutException:
@@ -319,75 +328,101 @@ def cheapest_flight(source,destination,departure_date,option,direct=False):
     
 # tracker for flight prices
 def price_tracker(driver,tracker_data):
-    
-    try:
-        
-        driver.get(TARGET_SITE)
-        driver.implicitly_wait(10)
-        # creating cursor like element
-        actions = ActionChains(driver)
+    if check_date(tracker_data["date"]):
+        tracker_data["stale"] = False
+        try:
+            
+            driver.get(TARGET_SITE)
+            driver.implicitly_wait(10)
+            # creating cursor like element
+            actions = ActionChains(driver)
 
-        # select one-way flight
-        one_way(driver,actions)
-        print("one")
-        # selecting source
-        source_selector(tracker_data["source"],driver) 
-        print("two")
-        # selecting destination 
-        destination_selector(tracker_data["destination"],driver)
-        print("three")
-        # selecting departure date
-        departureDate_xpath = "//label[@ng-keyup='DPOnFocus(0);']"
-        date_selector(date_optimiser(tracker_data["date"]),driver,departureDate_xpath,"dep")
-        print("four")
-        # clicking Search button
-        WebDriverWait(driver,2).until(
-            EC.presence_of_element_located((By.XPATH,"//input[@value='Search']"))
-        ).click()
+            # select one-way flight
+            one_way(driver,actions)
+            print("one")
+            # selecting source
+            source_selector(tracker_data["source"],driver) 
+            print("two")
+            # selecting destination 
+            destination_selector(tracker_data["destination"],driver)
+            print("three")
+            # selecting departure date
+            departureDate_xpath = "//label[@ng-keyup='DPOnFocus(0);']"
+            date_selector(date_optimiser(tracker_data["date"]),driver,departureDate_xpath,"dep")
+            print("four")
 
-        # selecting flight info that we need
-        
-        # print(f"time_elements: {time_elements}")
-        print("five")
-        time.sleep(10)
-        flight_nos = WebDriverWait(driver,30).until(
-            EC.presence_of_all_elements_located((By.XPATH,"//p[@class='mb-0 d-inline d-lg-block responsive-bold ng-binding']"))
-        )
-        print("six")
-        # print(f"flight_nos:{flight_nos}")
-        prices = WebDriverWait(driver,30).until(
-            EC.presence_of_all_elements_located((By.XPATH,'//p[@class="font-weight-600 text-gray lbl-bold roboto_font mb-0 ng-binding lbl-huge"]'))
-        )
-        print("seven")
-        num = len(flight_nos)
-        print("flights:",num)
-        
-        for i in range(0,num):
-            print(flight_nos[i].text)
-            if tracker_data["flight_no"] == flight_nos[i].text:
-                print("found")
-                float_price_new = extract_number(prices[i].get_attribute("innerHTML"))
-                float_price_old = extract_number(tracker_data["price"])
-                if float_price_new > float_price_old:
-                    tracker_data["price"] = prices[i].get_attribute("innerHTML")
-                    tracker_data["price_change"]="up"
-                    return tracker_data
-                elif float_price_new < float_price_old:
-                    tracker_data["price"] = prices[i].get_attribute("innerHTML")
-                    tracker_data["price_change"]="down"
-                    return tracker_data
-                else:
-                    tracker_data["price_change"]="neutral"
+            # checking for various checkboxes
+            if tracker_data["option"] == "student":
+                student_selector(driver)
+            elif tracker_data["option"] == "defence":
+                defence_selector(driver)
+            elif tracker_data["option"] == "senior_citizen":
+                seniorCitizen_selector(driver)
+            elif tracker_data["option"] == "doctors_nurses":
+                doctorNurses_selector(driver)
+            else:
+                print("No option selected")
+
+            # clicking Search button
+            WebDriverWait(driver,2).until(
+                EC.presence_of_element_located((By.XPATH,"//input[@value='Search']"))
+            ).click()
+
+            # selecting flight info that we need
+            time_elements = WebDriverWait(driver,30).until(
+                EC.presence_of_all_elements_located((By.XPATH,"//p[@class='mb-0 lbl-bold ng-binding lbl-huge']"))
+            )
+            # print(f"time_elements: {time_elements}")
+            print("five")
+            time.sleep(10)
+            flight_nos = WebDriverWait(driver,30).until(
+                EC.presence_of_all_elements_located((By.XPATH,"//p[@class='mb-0 d-inline d-lg-block responsive-bold ng-binding']"))
+            )
+            print("six")
+            # print(f"flight_nos:{flight_nos}")
+            prices = WebDriverWait(driver,30).until(
+                EC.presence_of_all_elements_located((By.XPATH,'//p[@class="font-weight-600 text-gray lbl-bold roboto_font mb-0 ng-binding lbl-huge"]'))
+            )
+            print("seven")
+            num = len(flight_nos)
+            print("flights:",num)
+            
+            for i in range(0,num):
+                print(flight_nos[i].text)
+                
+                if tracker_data["flight_no"] == flight_nos[i].text:
+                    print("found")
+                    float_price_new = extract_number(prices[i].get_attribute("innerHTML"))
+                    float_price_old = extract_number(tracker_data["price"])
+                    if float_price_new > float_price_old:
+                        tracker_data["price"] = prices[i].get_attribute("innerHTML")
+                        tracker_data["price_change"]="up"
+                        return tracker_data
+                    elif float_price_new < float_price_old:
+                        tracker_data["price"] = prices[i].get_attribute("innerHTML")
+                        tracker_data["price_change"]="down"
+                        return tracker_data
+                    else:
+                        return None
+                elif tracker_data["trackCheap"] and i==0:
+                    tracker_data["flight_no"] = flight_nos[0].text
+                    tracker_data["price"] = prices[0].get_attribute("innerHTML")
+                    tracker_data["take-off"] = time_elements[0].text
+                    tracker_data["landing-at"] = time_elements[1].text
                     return tracker_data
                 
-        
+                    
+            
 
 
-    except Exception as e:
-        print(f"A big error occured:{e}")
+        except Exception as e:
+            print(f"A big error occured:{e}")
+            
+            return "error"
+    else:
+        tracker_data["stale"] = True
+        return tracker_data
         
-        return "error"
-    
 
 
 

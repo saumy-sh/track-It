@@ -1,12 +1,11 @@
-from flask import Blueprint, request, jsonify, flash, session, redirect, url_for, render_template
-from flask_mail import Message
-from . import mail, mongo, scheduler
+from flask import Blueprint, request, flash, session, redirect, url_for, render_template
+from . import mongo
 from .model import User
 from authlib.integrations.flask_client import OAuth
 from dotenv import load_dotenv
 import os
 import secrets
-from app.static.scripts.script import cheapest_flight,price_tracker,date_optimiser,create_headless_driver
+from app.static.scripts.script import cheapest_flight,date_optimiser
 import json
 from bson.json_util import dumps
 import asyncio
@@ -161,6 +160,15 @@ def dashboard():
 
 @auth.route("logout",methods=["GET"])
 def logout():
+    if session["flight_task"]:
+        task = session["flight_task"]
+        if not task.done():
+            task.cancel()
+            print("Task cancelled")
+        else:
+            print("task done")
+    else:
+        print("not found!!")
     session.clear()
     flash("Logged out successfully!","message")
     return render_template("index.html")
@@ -178,15 +186,12 @@ def search():
         trackerList = search_query.get("trackerStorage")
         removeTrackerList = search_query.get("remove_trackers")
         email = session.get("mail")
-        # senior_citizen = search_query.get("senior_citizen")
-        # doctors_nurses = search_query.get("doctors_nurses")
-        print(f"Query data:{source},{destination},{date},{option},{trackerList},{removeTrackerList}")
+        track_cheap = search_query.get("track_cheap")
+    
+        print(f"Query data:{source},{destination},{date},{option},{direct_flight},{trackerList},{removeTrackerList}")
         if trackerList:
             flight_infos = json.loads(trackerList)
-            # print(f"Flight info:{flight_infos}")
-            # print("####################PREV DATA#######################")
-            # print(session.get("prev_query"))
-            # print("###################################################")
+            
             for flight in flight_infos:
                 try:
                     mongo.db.usersearch.insert_one({
@@ -197,7 +202,10 @@ def search():
                         "take_off":flight[2],
                         "landing_at":flight[3],
                         "flight_no":flight[0],
-                        "price":flight[1]
+                        "price":flight[1],
+                        "option":session["prev_query"]["option"],
+                        "direct":session["prev_query"]["direct"],
+                        "trackCheap":False
                     })
                 except Exception as e:
                     print(f"An error occured:{e}")   
@@ -225,24 +233,50 @@ def search():
             direct_flight = True
         else:
             direct_flight = False
-        # driver = create_headless_driver()
+
+        # function to run cheapest_flight function asynchronously
         async def run_script():
             try:
                 return await asyncio.wait_for(asyncio.to_thread(cheapest_flight,source,destination,optimised_date,option,direct=direct_flight),
                                           timeout=90)
             except TimeoutError:
                 return "timeout"
-        results = asyncio.run(run_script())
-        print(f"The fetched data is: {results}")
+            
+        # creating task for flight search for monitoring purpose
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        task = loop.create_task(run_script())
+        session['flight_task'] = task
+        print("flight task stored:",session["flight_task"])
+        results = loop.run_until_complete(run_script())
+        # print(f"The fetched data is: {results}")
+
+        if track_cheap:
+            try:
+                mongo.db.usersearch.insert_one({
+                    "email":email,
+                    "source":source,
+                    "destination":destination,
+                    "date":date,
+                    "take_off":results[0][2],
+                    "landing_at":results[0][3],
+                    "flight_no":results[0][0],
+                    "price":results[0][1],
+                    "option":option,
+                    "direct":direct_flight,
+                    "trackCheap":True
+                })
+            except Exception as e:
+                print(f"Can't track cheapest:{e}") 
 
         # print(results)
-        session["prev_query"] = {"source":source, "destination":destination, "date":date}
+        session["prev_query"] = {"source":source, "destination":destination, "date":date, "option":option, "direct":direct_flight}
 
 
 
         # update tracked searches in session so that changes get reflected on the frontend
         try:
-            userdata = mongo.db.usersearch.find({"email":email},{"_id":0,"email":0})
+            userdata = mongo.db.usersearch.find({"email":email},{"_id":0,"email":0,"direct":0,"option":0,"trackCheap":0})
             if userdata:
                 session["tracked_search"] = dumps(userdata)
                 print(session["tracked_search"])
@@ -261,47 +295,6 @@ def search():
                            option=option,
                            direct_flight=direct_flight)
 
-
-"""
-
-@scheduler.task("cron",id="update_price",hour=19,minute=56)
-def update_price():
-    with app.app_context():
-        tracker_data = mongo.db.usersearch.find()
-        results = []
-        for data in tracker_data:
-            print(data)
-            driver = create_headless_driver()
-            results.append(price_tracker(driver,data))
-            driver.quit()
-            print(results)
-
-        
-    
-        if results!="error":
-            try:
-                for data in results:
-                    if data["price_change"] == "up":
-                        subject = dumps(f"Flight no:{data["flight_no"]} from {data["source"]} to {data["destination"]} price increased!")
-                    elif data["price_change"] == "down":
-                        subject = dumps(f"Flight no:{data["flight_no"]} from {data["source"]} to {data["destination"]} price decreased!")
-                    else:
-                        subject = dumps(f"Flight no:{data["flight_no"]} from {data["source"]} to {data["destination"]}")
-                    message_body = dumps(f"Flight no:{data["flight_no"]} from {data["source"]} to {data["destination"]} taking off on {data["date"]} at {data["take_off"]} and landing at {data["landing_at"]} costs {data["price"]}.")
-                    recipient_mail = dumps(data["email"])
-                    msg = Message(
-                        subject=subject,
-                        recipients = [recipient_mail],
-                        body=message_body
-                    )
-                    mail.send(msg)
-                    print(f"Mail sent to {recipient_mail} :)")
-            except Exception as e:
-                print(f"An error occured:{e}")
-        else:
-            print("bhai gadbad ho gai!")
-
-"""
 
 
 

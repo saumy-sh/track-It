@@ -54,7 +54,7 @@ def create_app():
     scheduler.init_app(app)
     scheduler.start()
 
-    @scheduler.task("cron",id="update_price",hour=20,minute=32)
+    @scheduler.task("cron",id="update_price",hour=21,minute=5)
     def update_price():
         with app.app_context():
             tracker_data = mongo.db.usersearch.find()
@@ -72,21 +72,38 @@ def create_app():
             try:
                 for data in results:
                     if data != None:
-                        if data["price_change"] == "up":
-                            subject = dumps(f"Flight no:{data["flight_no"]} from {data["source"]} to {data["destination"]} price increased!")
-                        elif data["price_change"] == "down":
-                            subject = dumps(f"Flight no:{data["flight_no"]} from {data["source"]} to {data["destination"]} price decreased!")
+                        if not data["stale"]:
+                            print(data)
+                            mongo.db.usersearch.update_one({"flight_no":data["flight_no"]},
+                                                           {"$set":{"price":data["price"],
+                                                                    "flight_no":data["flight_no"],
+                                                                    "take_off":data["take_off"],
+                                                                    "landing_at":data["landing_at"]   
+                                                                }
+                                                            })
+                            print("reached here")
+                            if data["trackCheap"]:
+                                subject = dumps(f"Cheapest flight for {data["date"]} from {data["source"]} to {data["destination"]} is {data["flight_no"]}")
+                            elif data["price_change"] == "up":
+                                subject = dumps(f"Flight no:{data["flight_no"]} from {data["source"]} to {data["destination"]} price increased!")
+                            elif data["price_change"] == "down":
+                                subject = dumps(f"Flight no:{data["flight_no"]} from {data["source"]} to {data["destination"]} price decreased!")
+                            else:
+                                subject = dumps(f"Flight no:{data["flight_no"]} from {data["source"]} to {data["destination"]}")
+                            message_body = dumps(f"Flight no:{data["flight_no"]} from {data["source"]} to {data["destination"]} taking off on {data["date"]} at {data["take_off"]} and landing at {data["landing_at"]} costs {data["price"].replace("\u20b9","₹")}.")
+                            recipient_mail = [data["email"]]
+                            msg = Message(
+                                subject=subject,
+                                recipients = recipient_mail,
+                                body=message_body
+                            )
+                            mail.send(msg)
+                            print(f"Mail sent to {recipient_mail} :)")
                         else:
-                            subject = dumps(f"Flight no:{data["flight_no"]} from {data["source"]} to {data["destination"]}")
-                        message_body = dumps(f"Flight no:{data["flight_no"]} from {data["source"]} to {data["destination"]} taking off on {data["date"]} at {data["take_off"]} and landing at {data["landing_at"]} costs {data["price"]}.")
-                        recipient_mail = dumps(data["email"])
-                        msg = Message(
-                            subject=subject,
-                            recipients = [recipient_mail],
-                            body=message_body
-                        )
-                        mail.send(msg)
-                        print(f"Mail sent to {recipient_mail} :)")
+                            mongo.db.usersearch.delete_one({
+                                "date":data["date"],
+                                "flight_no":data["flight_no"]
+                            })
             except Exception as e:
                 print(f"An error occured:{e}")
            
