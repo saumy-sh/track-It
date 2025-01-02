@@ -214,7 +214,7 @@ def doctorNurses_selector(driver):
         EC.presence_of_element_located((By.XPATH,confirmBtn_xpath))
     ).click()
 
-def cheapest_flight(source,destination,departure_date,option,direct=False):
+def cheapest_flight(driver,source,destination,departure_date,option,direct=False):
     results = {"value":"null"}
     try:
         driver = create_headless_driver()

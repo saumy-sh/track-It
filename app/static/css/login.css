@@ -1,10 +1,28 @@
-body{
+/* Resetting margin and padding for all elements */
+* {
     margin: 0;
+    padding: 0;
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+
+}
+
+/* Background settings */
+.background {
+    position: relative;
+    background-size: cover;
+    background-position: center;
     height: 100vh;
-    display: flex;
-    justify-content: center; /* Center horizontally */
-    align-items: center;    /* Center vertically */
-    font-family: Arial, sans-serif;
+    overflow: hidden;
+}
+
+/* Content settings */
+.content {
+    position: relative;
+    z-index: 10; /* Ensures text and other content are in front of the background */
+    text-align: center;
+    color: #000000; /* Ensure text is visible against the background */
+    padding: 15rem;
+    padding-left: 27rem;
 }
 .flash-message{
     margin-bottom: 10px;
@@ -37,4 +55,44 @@ form button{
 }
 button:hover {
     background-color: #0056b3;
+}
+
+
+/* adding planes */
+.plane {
+    position: absolute;
+    width: 100px; /* Adjust size as needed */
+    /* Center vertically; adjust for different positions */
+    transform: translateY(-50%);
+    z-index: 2; /* Ensure planes are behind text */
+}
+
+/* Plane moving left to right */
+.left-to-right {
+    top: 70%;
+    animation: move-left-to-right 5s linear infinite; /* Looping animation */
+}
+
+/* Plane moving right to left */
+.right-to-left {
+    top: 40%;
+    animation: move-right-to-left 6s linear infinite; /* Adjust duration for variation */
+}
+
+@keyframes move-left-to-right {
+    from {
+        left: -100px; /* Start off-screen */
+    }
+    to {
+        left: 100vw; /* End off-screen on the right */
+    }
+}
+
+@keyframes move-right-to-left {
+    from {
+        right: -100px; /* Start off-screen */
+    }
+    to {
+        right: 100vw; /* End off-screen on the left */
+    }
 }

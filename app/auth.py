@@ -5,7 +5,7 @@ from authlib.integrations.flask_client import OAuth
 from dotenv import load_dotenv
 import os
 import secrets
-from app.static.scripts.script import cheapest_flight,date_optimiser
+from app.static.scripts.script import cheapest_flight,date_optimiser,create_headless_driver
 import json
 from bson.json_util import dumps
 import asyncio
@@ -155,26 +155,6 @@ def login():
 
 @auth.route("/dashboard",methods=["GET","POST"])
 def dashboard():
-    return render_template("dashboard.html",result=[])
-
-
-@auth.route("logout",methods=["GET"])
-def logout():
-    if "flight_task" in session:
-        task = session["flight_task"]
-        if not task.done():
-            task.cancel()
-            print("Task cancelled")
-        else:
-            print("task done")
-    else:
-        print("not found!!")
-    session.clear()
-    return render_template("index.html")
-
-
-@auth.route("/search",methods=["GET","POST"])
-def search():
     if request.method == "POST":
         search_query = request.form
         source = search_query.get("from")
@@ -232,23 +212,22 @@ def search():
             direct_flight = True
         else:
             direct_flight = False
-
+        driver = create_headless_driver()
         # function to run cheapest_flight function asynchronously
         async def run_script():
             try:
-                return await asyncio.wait_for(asyncio.to_thread(cheapest_flight,source,destination,optimised_date,option,direct=direct_flight),
-                                          timeout=90)
+                return await asyncio.wait_for(asyncio.to_thread(cheapest_flight,driver,source,destination,optimised_date,option,direct=direct_flight),
+                                        timeout=90)
             except TimeoutError:
+                print("timeout")
                 return "timeout"
             
         # creating task for flight search for monitoring purpose
         # loop = asyncio.new_event_loop()
         # asyncio.set_event_loop(loop)
         # task = loop.create_task(run_script())
-        # session['flight_task'] = task
         # session['test'] = "test"
         # session.modified = True
-        # print("flight task stored:",session["flight_task"])
         results = asyncio.run(run_script())
         # print(f"The fetched data is: {results}")
 
@@ -285,16 +264,45 @@ def search():
                 session["tracked_search"] = []
         except Exception as e:
             print(f"An error occured:{e}")
+        return render_template("dashboard.html",
+                        result=results,
+                        source=source,
+                        destination=destination,
+                        date=date,
+                        option=option,
+                        direct_flight=direct_flight)
+    else:
+        return render_template("dashboard.html",result=[])
 
 
 
-    return render_template("dashboard.html",
-                           result=results,
-                           source=source,
-                           destination=destination,
-                           date=date,
-                           option=option,
-                           direct_flight=direct_flight)
+@auth.route("/logout",methods=["GET"])
+def logout():
+    if "flight_driver" in session:
+            print(session["flight_driver"])
+            driver = session["flight_driver"]
+            try:
+                driver.quit()
+            except Exception as err:
+                print(f"An error occured:{err}")
+    else:
+        print("no driver found")
+    session.clear()
+    return render_template("index.html")
+
+@auth.route("/submit_feedback", methods=["POST"])
+def submit_feedback():
+    name = request.form.get("name")
+    email = request.form.get("email")
+    feedback = request.form.get("feedback")
+    rating = request.form.get("rating")  # Get the star rating
+
+    # Process the feedback (e.g., save to database or send an email)
+    print(f"Feedback received from {name} ({email}): {feedback} - Rating: {rating}")
+    return "Thank you for your feedback!"
+
+
+
 
 
 

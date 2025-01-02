@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feedback | Track It</title>
+    <link rel="icon" href="{{ url_for('static', filename='img/icon.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/feedback.css') }}">
+    <style>
+        .star-rating {
+            display: flex;
+            flex-direction: row-reverse;
+            justify-content: center;
+            gap: 5px;
+        }
+        .star-rating input {
+            display: none;
+        }
+        .star-rating label {
+            font-size: 2rem;
+            color: #ccc;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+        .star-rating input:checked ~ label,
+        .star-rating label:hover,
+        .star-rating label:hover ~ label {
+            color: #f5b301;
+        }
+    </style>
+</head>
+<body>
+    <div class="feedback-container">
+        <h1>Your Feedback Matters a lot</h1>
+        <form action="/submit_feedback" method="POST">
+            <div class="form-group">
+                <label for="name">Name:</label>
+                <input type="text" id="name" name="name" placeholder="Enter your name" required>
+            </div>
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" placeholder="Enter your email" required>
+            </div>
+            <div class="form-group">
+                <label for="feedback">Feedback:</label>
+                <textarea id="feedback" name="feedback" rows="4" placeholder="Write your feedback here" required></textarea>
+            </div>
+            <div class="form-group">
+                <label>Rate us:</label>
+                <div class="star-rating">
+                    <img class="ratings" value=1 src="{{url_for('static', filename='img/unrated-star.png')}}">
+                    <img class="ratings" value=2 src="{{url_for('static', filename='img/unrated-star.png')}}">
+                    <img class="ratings" value=3 src="{{url_for('static', filename='img/unrated-star.png')}}">
+                    <img class="ratings" value=4 src="{{url_for('static', filename='img/unrated-star.png')}}">
+                    <img class="ratings" value=5 src="{{url_for('static', filename='img/unrated-star.png')}}">
+                </div>
+                <input type="number" id="rating" name="rating" hidden>
+            </div>
+            <button type="submit">Submit Feedback</button>
+        </form>
+    </div>
+    <script>
+        const ratingGiven = document.getElementById("rating");
+        const ratings = document.querySelectorAll("img[class='ratings']");
+        ratings.forEach((star) => {
+            if(star.value == ratingGiven.value){
+                ratingGiven.value = null;
+                ratings.forEach((ratedValue) => {
+                    if (ratedValue.value <= star.value){
+                        ratedValue.src = "{{ url_for('static', filename='img/unrated-star.png') }}"
+                    }
+                })
+            }else{
+                ratingGiven.value = star.value;
+                ratings.forEach((ratedValue) => {
+                    if (ratedValue.value <= star.value){
+                        ratedValue.src = "{{ url_for('static', filename='img/rated-star.png') }}"
+                    }
+                })
+            }
+        })
+    </script>
+</body>
+</html>
