@@ -2,9 +2,21 @@
 * {
     margin: 0;
     padding: 0;
-    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
-
 }
+.logo-container{
+    text-decoration: none;
+}
+
+.logo-container img {
+    width: 50px;
+    height: 50px;
+    margin-right: 10px;
+}
+
+.logo-container p {
+    font-size: 24px;
+    margin: 0;
+} 
 
 /* Background settings */
 .background {
@@ -77,6 +89,11 @@ button:hover {
 .right-to-left {
     top: 40%;
     animation: move-right-to-left 6s linear infinite; /* Adjust duration for variation */
+}
+
+.left-to-right-balloon{
+    top: 20%;
+    animation: move-left-to-right 7s linear infinite; /* Looping animation */
 }
 
 @keyframes move-left-to-right {

@@ -1,9 +1,115 @@
-.star-rating{
-    display: flex;
-    gap: 5px; 
-    justify-content: center; 
-    align-items: center; 
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f9f9f9;
 }
-img .ratings{
+
+.logo-container {
+    display: flex;
+    align-items: center;
     cursor: pointer;
+    text-decoration: none;
+    color: #000000;
+    position: absolute; /* Align to the corner */
+    top: 1px; /* Adjust top distance */
+    left: 1px; /* Adjust left distance */
+}
+
+.logo-container img {
+    width: 100px;
+    height: 100px;
+    margin-right: 0;
+}
+
+.logo-container h1 {
+    font-size: 28px;
+    margin: 0;
+} 
+
+.feedback-container {
+    max-width: 1000px;
+    margin: 50px auto;
+    padding: 20px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.heading-content{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin: 1rem;
+}
+
+.feedback-container h1 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.content {
+    padding: 10px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #555;
+}
+
+.form-group input, 
+.form-group textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+    box-sizing: border-box;
+    width: 400px;
+}
+
+.form-group textarea {
+    resize: none;
+}
+
+.star-rating {
+    display: flex;
+    gap: 5px;
+}
+
+.star-rating img {
+    cursor: pointer;
+    width: 30px;
+    height: 30px;
+}
+
+.star-rating img:hover,
+.star-rating img.selected {
+    filter: brightness(1.2);
+}
+
+button[type="submit"] {
+    width: 100%;
+    background: #007BFF;
+    color: #fff;
+    padding: 12px;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+button[type="submit"]:hover {
+    background: #0056b3;
 }

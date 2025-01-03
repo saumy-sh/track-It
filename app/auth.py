@@ -1,5 +1,5 @@
 from flask import Blueprint, request, flash, session, redirect, url_for, render_template
-from . import mongo
+from . import mongo,mail
 from .model import User
 from authlib.integrations.flask_client import OAuth
 from dotenv import load_dotenv
@@ -9,6 +9,7 @@ from app.static.scripts.script import cheapest_flight,date_optimiser,create_head
 import json
 from bson.json_util import dumps
 import asyncio
+from flask_mail import Message
 
 
 
@@ -78,7 +79,7 @@ async def run_with_timeout(func, timeout, driver, source, destination, departure
 
 @auth.route("/",methods=["GET"])
 def main_page():
-    test_connection()
+    session.clear()
     return render_template("index.html")
 
 @auth.route("/signup",methods=["GET","POST"])
@@ -229,7 +230,7 @@ def dashboard():
         # session['test'] = "test"
         # session.modified = True
         results = asyncio.run(run_script())
-        # print(f"The fetched data is: {results}")
+
 
         if track_cheap:
             try:
@@ -290,16 +291,35 @@ def logout():
     session.clear()
     return render_template("index.html")
 
-@auth.route("/submit_feedback", methods=["POST"])
-def submit_feedback():
-    name = request.form.get("name")
-    email = request.form.get("email")
-    feedback = request.form.get("feedback")
-    rating = request.form.get("rating")  # Get the star rating
+@auth.route("/feedback", methods=["GET","POST"])
+def feedback():
+    if request.method == "POST":
+        name = request.form.get("name")
+        email = request.form.get("email")
+        feedback = request.form.get("feedback")
+        rating = request.form.get("rating")  # Get the star rating
+        if not rating:
+            rating = 0
+        else: 
+            rating = int(rating)
 
-    # Process the feedback (e.g., save to database or send an email)
-    print(f"Feedback received from {name} ({email}): {feedback} - Rating: {rating}")
-    return "Thank you for your feedback!"
+        # Process the feedback (e.g., save to database or send an email)
+        print(f"Feedback received from {name} ({email}): {feedback} - Rating: {rating}")
+        try:
+            msg = Message(
+                subject=f"Feedback: Ratings{'⭐' * rating } given by {name}:{email}",
+                recipients=[os.getenv("GMAIL-ACCOUNT")],
+                body=feedback
+            )
+            mail.send(msg)
+            flash("Feedback sent successfully","message")
+        except Exception as err:
+            print(f"mail ni gaya {err}")
+            flash("An error occured try again","error")
+        
+        
+    
+    return render_template("feedback.html")
 
 
 

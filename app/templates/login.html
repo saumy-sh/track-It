@@ -13,7 +13,9 @@
     <div class="background" id="background">
         <img src="{{ url_for('static', filename='img/plane-left.png') }}" class="plane left-to-right" alt="Plane 1">
         <img src="{{ url_for('static', filename='img/plane-right.png') }}" class="plane right-to-left" alt="Plane 2">
+        <img src="{{ url_for('static', filename='img/hot-air-balloon.png') }}" class="plane left-to-right-balloon" alt="Plane 2">
         <div class="content">
+            
             <!-- Display flash messages -->
             {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
@@ -36,7 +38,10 @@
             {% endwith %} 
             
             <div class="login-page">
-                <h2>Login to track It</h2>
+                <a href="/" class="logo-container">
+                    <img src="{{ url_for('static', filename='img/icon.png') }}" alt="TrackIt Logo" style="width: 100px; height: 100px;">
+                    <h2>Track It</h2>
+                </a>
                 <br>
                 <form class="login-info" action="/login" method="post">
                     <input type="email" id="email" name="email" placeholder="Type your gmail here" required>

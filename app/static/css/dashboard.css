@@ -2,9 +2,29 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box; /* Add box-sizing for better control of element sizing */
-    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
-
 }
+
+.logo-container {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    text-decoration: none;
+    color: #000000;
+    position: absolute; /* Align to the corner */
+    top: 1px; /* Adjust top distance */
+    left: 1px; /* Adjust left distance */
+}
+
+.logo-container img {
+    width: 100px;
+    height: 100px;
+    margin-right: 0;
+}
+
+.logo-container h1 {
+    font-size: 28px;
+    margin: 0;
+} 
 
 /* Background settings */
 .background {

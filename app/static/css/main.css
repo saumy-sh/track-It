@@ -3,8 +3,6 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box; /* Add box-sizing for better control of element sizing */
-    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
-
 }
 
 /* Background settings */
@@ -12,8 +10,14 @@
     position: relative;
     background-size: cover;
     background-position: center;
-    height: 100vh;
+    height: 720px;
     overflow: hidden;
+}
+.background h2{
+    margin-left: 10rem;
+    margin-top: 2rem;
+    font-size: 4rem;
+    font-weight: 900;
 }
 
 /* Content settings */
@@ -33,11 +37,13 @@
     justify-content: center;
     align-items: center;
     margin-top: 0.5rem; /* Adjust spacing */
+    
 }
 
 /* Individual navigation items */
 .nav-list li {
     padding: 0 1rem; /* Horizontal padding */
+    color: #000000;
 }
 
 /* Buttons for login and signup */
@@ -109,6 +115,7 @@
     padding: 3rem 2rem;
     text-align: center;
     margin-top: 3rem;
+    height: 720px;
 }
 
 .problem-section h2 {
@@ -182,27 +189,148 @@
 }
 
 
+/* info section  */
 
+.info-section {
+    width: 60%;
+    margin: 0 auto;
+    font-family: Arial, sans-serif;
+    font-weight: 100;
+    padding: 2rem;
+    margin-left: 23rem;
+}
+
+.info-item {
+    border-radius: 8px;
+    margin: 10px 0;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+}
+
+.toggle-button {
+    border: none;
+    font-size: 18px;
+    text-align: center;
+    cursor: pointer;
+    margin-right: 10px;
+    appearance: none;
+    color: #bec4c0;
+    background-color: transparent;
+    justify-content: right;
+    width: 30px;
+    height: 30px;
+}
+
+.toggle-button:hover {
+    color: #000000;
+}
+
+.info-content {
+    display: none; /* Initially hidden */
+    margin-top: 15px;
+    padding: 10px;
+    border-radius: 4px;
+}
+.toggle-header{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 50px;
+    max-width: 380px;
+    font-weight: 300;
+}
+.info-section hr{
+    width: 400px;
+}
+
+
+/* pricing section */
+.price{
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 720px;
+    padding: 1rem;
+    overflow: hidden;
+}
+.price-content{
+    position: relative;
+    z-index: 10;
+    margin-top: 3rem;
+}
+.price-content h2{
+    font-size: 4rem;
+    margin-bottom: 1.5rem;
+    font-weight: 900;
+}
+
+
+/* faqs */
+.faq-content{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+
+}
+.faq-header{
+    display: flex;
+    flex-direction: column;
+}
+.faq-header h2{
+    margin-top: 5rem;
+}
+
+
+.faq-questions{
+    width: 60%;
+    margin: 0 auto;
+    font-family: Arial, sans-serif;
+    font-weight: 100;
+    padding: 2rem;
+    margin-right: 3rem;
+}
 
 /* adding planes */
 .plane {
     position: absolute;
-    width: 100px; /* Adjust size as needed */
-    /* Center vertically; adjust for different positions */
     transform: translateY(-50%);
     z-index: 2; /* Ensure planes are behind text */
 }
 
 /* Plane moving left to right */
 .left-to-right {
+    width: 100px;
     top: 70%;
     animation: move-left-to-right 5s linear infinite; /* Looping animation */
 }
 
 /* Plane moving right to left */
 .right-to-left {
+    width: 100px;
     top: 40%;
     animation: move-right-to-left 6s linear infinite; /* Adjust duration for variation */
+}
+
+.left-to-right-balloon{
+    width: 100px;
+    top: 20%;
+    animation: move-left-to-right 7s linear infinite; /* Looping animation */
+}
+
+.left-to-right-banner{
+    width: 300px;
+    height: 103px;
+    top: 20%;
+    animation: move-left-to-right 7s linear infinite; /* Looping animation */
+}
+
+.right-to-left-banner{
+    width: 300px;
+    height: 103px;
+    top: 70%;
+    animation: move-right-to-left 5s linear infinite; /* Looping animation */
 }
 
 @keyframes move-left-to-right {
