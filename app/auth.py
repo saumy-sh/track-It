@@ -227,7 +227,7 @@ def dashboard():
         async def run_script():
             try:
                 return await asyncio.wait_for(asyncio.to_thread(cheapest_flight,driver,source,destination,optimised_date,option,direct=direct_flight),
-                                        timeout=180)
+                                        timeout=120)
             except TimeoutError:
                 driver.quit()
                 print("timeout")
