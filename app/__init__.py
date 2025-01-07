@@ -9,7 +9,10 @@ from app.static.scripts.script import price_tracker,create_headless_driver
 from bson.json_util import dumps
 
 mail = Mail()
-mongo = PyMongo()
+mongo = PyMongo(maxPoolSize=50,   # Maximum number of connections
+    minPoolSize=10,   # Minimum number of connections
+    maxIdleTimeMS=120000  # Time before a connection is closed if idle
+    )
 scheduler = APScheduler()
 
 
