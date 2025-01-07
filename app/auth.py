@@ -5,7 +5,7 @@ from authlib.integrations.flask_client import OAuth
 from dotenv import load_dotenv
 import os
 import secrets
-from app.static.scripts.script import cheapest_flight,date_optimiser,create_headless_driver
+from app.static.scripts.script import cheapest_flight,date_optimiser,create_headless_driver,flight_booking
 import json
 from bson.json_util import dumps
 import asyncio
@@ -179,12 +179,20 @@ def dashboard():
                         "source":session["prev_query"]["source"],
                         "destination":session["prev_query"]["destination"],
                         "date":session["prev_query"]["date"],
-                        "take_off":flight[2],
-                        "landing_at":flight[3],
+                        "take_off":flight[3],
+                        "landing_at":flight[4],
+                        "take_off_date":flight[8],
+                        "landing_date":flight[9],
+                        "terminal_takeoff":flight[6],
+                        "terminal_landing":flight[7],
+                        "duration":flight[5],
                         "flight_no":flight[0],
-                        "price":flight[1],
+                        "tag":flight[1],
+                        "price":flight[2],
                         "option":session["prev_query"]["option"],
                         "direct":session["prev_query"]["direct"],
+                        "url":flight[10],
+                        "price_change":"neutral",
                         "trackCheap":False
                     })
                 except Exception as e:
@@ -197,10 +205,11 @@ def dashboard():
                 print(flight["date"],email,flight["flight_no"])
                 try:
                     deleted_result = mongo.db.usersearch.delete_one(
-                        {"email":email,
-                        "date":flight["date"],
-                        "flight_no":flight["flight_no"]
-                    })
+                        {
+                            "email":email,
+                            "date":flight["date"],
+                            "flight_no":flight["flight_no"]
+                        })
                     print(f"Deleted {deleted_result.deleted_count} document(s)")
 
                 except Exception as e:
@@ -218,8 +227,9 @@ def dashboard():
         async def run_script():
             try:
                 return await asyncio.wait_for(asyncio.to_thread(cheapest_flight,driver,source,destination,optimised_date,option,direct=direct_flight),
-                                        timeout=90)
+                                        timeout=120)
             except TimeoutError:
+                driver.quit()
                 print("timeout")
                 return "timeout"
             
@@ -231,6 +241,7 @@ def dashboard():
         # session.modified = True
         results = asyncio.run(run_script())
 
+        # results format: [flight_no with flight name, non-stop tags, price, take-off time, land time, flight duration, takeoff terminal, landing terminal, takeoff date, landing date, booking_url]
 
         if track_cheap:
             try:
@@ -239,12 +250,20 @@ def dashboard():
                     "source":source,
                     "destination":destination,
                     "date":date,
-                    "take_off":results[0][2],
-                    "landing_at":results[0][3],
+                    "take_off":results[0][3],
+                    "landing_at":results[0][4],
+                    "take_off_date":results[0][8],
+                    "landing_date":results[0][9],
+                    "terminal_takeoff":results[0][6],
+                    "terminal_landing":results[0][7],
+                    "duration":results[0][5],
                     "flight_no":results[0][0],
-                    "price":results[0][1],
+                    "tag":results[0][1],
+                    "price":results[0][2],
                     "option":option,
                     "direct":direct_flight,
+                    "url":results[0][10],
+                    "price_change":"neutral",
                     "trackCheap":True
                 })
             except Exception as e:
@@ -271,7 +290,8 @@ def dashboard():
                         destination=destination,
                         date=date,
                         option=option,
-                        direct_flight=direct_flight)
+                        direct_flight=direct_flight,
+                        track_cheap=track_cheap)
     else:
         return render_template("dashboard.html",result=[])
 
@@ -322,6 +342,23 @@ def feedback():
     return render_template("feedback.html")
 
 
+@auth.route("redirect_to_booking_page",methods=["GET","POST"])
+def redirect_to_booking_page():
+    
+    if request.method == "POST":
+        form_data = request.form
+        print(form_data)
+        url = form_data.get("booking_url")
+        flight_no = form_data.get("flight_no")
+        return redirect(url)
+        result = flight_booking(url,flight_no)
+        if result == "success":
+            return flash("Redirected successfully","message")
+        else:
+            return flash("An error occure","error")
+    else:
+        return redirect(url)
+    
 
 
 

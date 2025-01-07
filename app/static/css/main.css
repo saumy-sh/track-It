@@ -316,7 +316,7 @@
 .left-to-right-balloon{
     width: 100px;
     top: 20%;
-    animation: move-left-to-right 7s linear infinite; /* Looping animation */
+    animation: move-left-to-right 10s linear infinite; /* Looping animation */
 }
 
 .left-to-right-banner{

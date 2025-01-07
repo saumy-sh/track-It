@@ -54,7 +54,7 @@ def create_app():
     scheduler.init_app(app)
     scheduler.start()
 
-    @scheduler.task("cron",id="update_price",hour=1,minute=51)
+    @scheduler.task("cron",id="update_price",hour=17,minute=22)
     def update_price():
         with app.app_context():
             tracker_data = mongo.db.usersearch.find()
@@ -74,11 +74,16 @@ def create_app():
                     if data != None:
                         if not data["stale"]:
                             print(data)
-                            mongo.db.usersearch.update_one({"flight_no":data["flight_no"]},
-                                                           {"$set":{"price":data["price"],
-                                                                    "flight_no":data["flight_no"],
-                                                                    "take_off":data["take_off"],
-                                                                    "landing_at":data["landing_at"]   
+                            mongo.db.usersearch.update_one({"flight_no":data["prev_flight_no"]},
+                                                           {"$set":{
+                                                                "price":data["price"],
+                                                                "flight_no":data["flight_no"],
+                                                                "take_off":data["take_off"],
+                                                                "landing_at":data["landing_at"],
+                                                                "price_change":data["price_change"],
+                                                                "terminal_takeoff":data["terminal_takeoff"],
+                                                                "terminal_landing":data["terminal_landing"],
+                                                                "duration":data["duration"]
                                                                 }
                                                             })
                             
@@ -96,10 +101,12 @@ def create_app():
                             Flight Number: {data["flight_no"]}
                             Route: {data["source"]} ➡️ {data["destination"]}
                             Date: {data["date"]}
-                            Take Off: {data["take_off"]}
+                            Take Off Time: {data["take_off"]}
                             Landing Time: {data["landing_at"]}
+                            Take Off Terminal: {data["terminal_takeoff"]}
+                            Landing Terminal: {data["terminal_landing"]}
 
-                            💸 Current Price: {data["price"].replace("\\u20b9", "₹")}
+                            Current Price: 💸{data["price"].replace("\\u20b9", "₹")}💸
 
                             Safe travels! ✈️
                             """                            

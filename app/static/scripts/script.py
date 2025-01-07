@@ -43,7 +43,7 @@ def extract_number(price_str):
 # to check if the day has passed
 def check_date(date):
     strp_date = datetime.strptime(date,"%Y-%m-%d")
-    current_date = datetime.now()
+    current_date = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
     print(current_date)
     print(strp_date)
     if strp_date < current_date:
@@ -131,7 +131,7 @@ def source_selector(source,driver):
     )
     source_element.click()
     source_element.send_keys(source)
-    time.sleep(1)
+    time.sleep(4)
     source_element.send_keys(Keys.ENTER)
 
 def destination_selector(destination,driver):
@@ -141,7 +141,7 @@ def destination_selector(destination,driver):
     )
     destination_element.click()
     destination_element.send_keys(destination)
-    time.sleep(1)
+    time.sleep(4)
     destination_element.send_keys(Keys.ENTER)
 
 
@@ -217,7 +217,7 @@ def doctorNurses_selector(driver):
 def cheapest_flight(driver,source,destination,departure_date,option,direct=False):
     results = {"value":"null"}
     try:
-        driver = create_headless_driver()
+
         # go to target site
         driver.get(TARGET_SITE)
         driver.implicitly_wait(10)
@@ -275,42 +275,48 @@ def cheapest_flight(driver,source,destination,departure_date,option,direct=False
         
         # selecting flight info that we need
         try:
-            time_elements = WebDriverWait(driver,30).until(
-                EC.presence_of_all_elements_located((By.XPATH,"//p[@class='mb-0 lbl-bold ng-binding lbl-huge']"))
-            )
-            # print(f"time_elements: {time_elements}")
-
-            flight_nos = WebDriverWait(driver,30).until(
-                EC.presence_of_all_elements_located((By.XPATH,"//p[@class='mb-0 d-inline d-lg-block responsive-bold ng-binding']"))
-            )
-
-            # print(f"flight_nos:{flight_nos}")
-            prices = WebDriverWait(driver,30).until(
-                EC.presence_of_all_elements_located((By.XPATH,'//p[@class="font-weight-600 text-gray lbl-bold roboto_font mb-0 ng-binding lbl-huge"]'))
-            )
+            
             # print(f"prices:{prices}")
             # seats_available = WebDriverWait(driver,10).until(
             #     EC.presence_of_all_elements_located((By.XPATH,"//span[@class='text ng-binding']"))
             # )
-
-
-            num = len(flight_nos)
-            print("time:",len(time_elements))
+            driver.implicitly_wait(15)
+            root_elements = WebDriverWait(driver,30).until(
+                EC.presence_of_all_elements_located((By.XPATH,"//div[@class='row text-center py-2']"))
+            )
+            num = len(root_elements)
             print("flights:",num)
             
             result_value = []
-            if num > 10 or len(time_elements) > 2*num:
-                num = min(10,len(time_elements)//2)
+            if num > 10 :
+                num = min(10,num)
             print(num)
-            # results format: [flight_no with flight name, price, take-off time, land time]
+            url = driver.current_url
+            # results format: [flight_no with flight name, non-stop tags, price, take-off time, land time, flight duration, takeoff terminal, landing terminal, takeoff date, landing date, booking_url]
             for i in range(0,num):
-                result_value.append([flight_nos[i].text,prices[i].get_attribute("innerHTML"),time_elements[i*2].text,time_elements[i*2+1].text])
-                # print(f"Flight No: {flight_nos[i].text}")
-                # print(f"Price: {prices[i].get_attribute("innerHTML")}") # here .text will not work, hence using get_attribute 
-                # print(f"Take-off at:{time_elements[i*2].text}    Landing At: {time_elements[i*2+1].text}")
-                # # print(f"Seats Available: {seats_available[i].text}")
-                # print("###############################################")
-        
+                
+                
+                flight_no = root_elements[i].find_element(By.XPATH,".//p[@class='mb-0 d-inline d-lg-block responsive-bold ng-binding']").text
+                time_elements = root_elements[i].find_elements(By.XPATH,".//p[@class='mb-0 lbl-bold ng-binding lbl-huge']")
+                price_element = root_elements[i].find_element(By.XPATH,'.//p[@class="font-weight-600 text-gray lbl-bold roboto_font mb-0 ng-binding lbl-huge"]').get_attribute("innerHTML")
+                airports = root_elements[i].find_elements(By.XPATH,'.//span[@class="lbl-medium font-weight-600 mb-0 text-nowrap ng-binding"]')
+                airport_places = [airport.text for airport in airports]
+                duration = root_elements[i].find_element(By.XPATH,'.//span[@class="responsive-dblock ng-binding"]').text
+                dates_elements = root_elements[i].find_elements(By.XPATH,'.//p[@class="hide-on-small-and-down mb-0 font-weight-600 ng-binding lbl-xmedium"]')
+                dates = [date.text for date in dates_elements]
+                try:
+                    tag = root_elements[i].find_element(By.XPATH,'.//span[@class="non-stopcolor lbl-bold responsive-dblock ng-scope"]').text
+                except WebDriverException:
+                    tag = root_elements[i].find_element(By.XPATH,'.//span[contains(@class,"lbl-bold responsive-dblock ng-binding ng-scope")]').text
+
+                print(flight_no)
+                print(airport_places)
+                print(dates)
+                print(duration)
+                print(tag)
+                result_value.append([flight_no,tag,price_element,time_elements[0].text,time_elements[1].text,duration,airport_places[0],airport_places[1],dates[0],dates[1],url])
+                
+
             results["value"] = result_value
         except TimeoutException:
             driver.save_screenshot("err.png")
@@ -319,7 +325,8 @@ def cheapest_flight(driver,source,destination,departure_date,option,direct=False
         return results["value"]
         
 
-    except WebDriverException:
+    except WebDriverException as err:
+        print(f"gadbad ho gai: {err}")
         results["value"] = "error"
         driver.quit()
         return results["value"]
@@ -369,46 +376,54 @@ def price_tracker(driver,tracker_data):
             ).click()
 
             # selecting flight info that we need
-            time_elements = WebDriverWait(driver,30).until(
-                EC.presence_of_all_elements_located((By.XPATH,"//p[@class='mb-0 lbl-bold ng-binding lbl-huge']"))
+            
+
+            driver.implicitly_wait(15)
+            root_elements = WebDriverWait(driver,30).until(
+                EC.presence_of_all_elements_located((By.XPATH,"//div[@class='row text-center py-2']"))
             )
-            # print(f"time_elements: {time_elements}")
-            print("five")
-            time.sleep(10)
-            flight_nos = WebDriverWait(driver,30).until(
-                EC.presence_of_all_elements_located((By.XPATH,"//p[@class='mb-0 d-inline d-lg-block responsive-bold ng-binding']"))
-            )
-            print("six")
-            # print(f"flight_nos:{flight_nos}")
-            prices = WebDriverWait(driver,30).until(
-                EC.presence_of_all_elements_located((By.XPATH,'//p[@class="font-weight-600 text-gray lbl-bold roboto_font mb-0 ng-binding lbl-huge"]'))
-            )
-            print("seven")
-            num = len(flight_nos)
+            num = len(root_elements)
             print("flights:",num)
             
             for i in range(0,num):
-                print(flight_nos[i].text)
+                flight_no = root_elements[i].find_element(By.XPATH,".//p[@class='mb-0 d-inline d-lg-block responsive-bold ng-binding']").text
+                time_elements = root_elements[i].find_elements(By.XPATH,".//p[@class='mb-0 lbl-bold ng-binding lbl-huge']")
+                price = root_elements[i].find_element(By.XPATH,'.//p[@class="font-weight-600 text-gray lbl-bold roboto_font mb-0 ng-binding lbl-huge"]').get_attribute("innerHTML")
+                airports = root_elements[i].find_elements(By.XPATH,'.//span[@class="lbl-medium font-weight-600 mb-0 text-nowrap ng-binding"]')
+                airport_places = [airport.text for airport in airports]
+                duration = root_elements[i].find_element(By.XPATH,'.//span[@class="responsive-dblock ng-binding"]').text
+                dates_elements = root_elements[i].find_elements(By.XPATH,'.//p[@class="hide-on-small-and-down mb-0 font-weight-600 ng-binding lbl-xmedium"]')
+                dates = [date.text for date in dates_elements]
+                print(flight_no)
+                print("##################################################")
+                tracker_data["prev_flight_no"] = tracker_data["flight_no"]
                 
-                if tracker_data["flight_no"] == flight_nos[i].text:
+                if tracker_data["flight_no"] == flight_no:
+                    
                     print("found")
-                    float_price_new = extract_number(prices[i].get_attribute("innerHTML"))
+                    float_price_new = extract_number(price)
                     float_price_old = extract_number(tracker_data["price"])
                     if float_price_new > float_price_old:
-                        tracker_data["price"] = prices[i].get_attribute("innerHTML")
+                        tracker_data["price"] = price
                         tracker_data["price_change"]="up"
                         return tracker_data
                     elif float_price_new < float_price_old:
-                        tracker_data["price"] = prices[i].get_attribute("innerHTML")
+                        tracker_data["price"] = price
                         tracker_data["price_change"]="down"
                         return tracker_data
                     else:
-                        return None
+                        tracker_data["price_change"] = "neutral"
+                        return tracker_data
                 elif tracker_data["trackCheap"] and i==0:
-                    tracker_data["flight_no"] = flight_nos[0].text
-                    tracker_data["price"] = prices[0].get_attribute("innerHTML")
+                    tracker_data["flight_no"] = flight_no
+                    tracker_data["price"] = price
                     tracker_data["take-off"] = time_elements[0].text
                     tracker_data["landing-at"] = time_elements[1].text
+                    tracker_data["terminal_takeoff"] = airport_places[0]
+                    tracker_data["terminal_landing"] = airport_places[1]
+                    tracker_data["take_off_date"] = dates[0]
+                    tracker_data["landing_date"] = dates[1]
+                    tracker_data["duration"] = duration
                     return tracker_data
                 
                     
@@ -417,11 +432,47 @@ def price_tracker(driver,tracker_data):
 
         except Exception as e:
             print(f"A big error occured:{e}")
-            
             return "error"
     else:
         tracker_data["stale"] = True
         return tracker_data
+    
+# redirect to flight booking page
+def flight_booking(info_url,flight_no):
+    chrome_options = Options()
+    chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36")
+    chrome_options.add_argument("--disable-notifications")
+    driver = webdriver.Chrome(options=chrome_options)
+    try:
+        print("info_url:",info_url)
+        driver.get(info_url)
+        driver.implicitly_wait(10)
+        root_elements = WebDriverWait(driver,30).until(
+            EC.presence_of_all_elements_located((By.XPATH,"//div[class='row text-center py-2']"))
+        )
+        for element in root_elements:
+            element.find_element(By.XPATH,"//p[@class='mb-0 d-inline d-lg-block responsive-bold ng-binding']")
+            print("elemnt found")
+            if element.text == flight_no:    
+                element.find_element(By.XPATH,'//button[@class="btn rounded btn-primary btn-block mt-2 CL ng-binding"]').click()
+                print("opened")
+        while True:
+            if not driver.window_handles:
+                
+                driver.quit()
+                
+                return "success"
+    except WebDriverException as e:
+        print(f"error:{e}")
+        
+        driver.quit()
+        
+        return "error"
+
+            
+            
+            
+
         
 
 

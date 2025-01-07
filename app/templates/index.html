@@ -18,8 +18,8 @@
             <section class="top-bar">
                 <nav class="nav-bar">
                     <ul class="nav-list">
-                        <li><a href="#">Price</a></li>
-                        <li><a href="#">FAQs</a></li>
+                        <li><a href="#price">Price</a></li>
+                        <li><a href="#faq">FAQs</a></li>
                         <li><a href="{{ url_for('auth.feedback') }}">Feedback</a></li>
                     </ul>
                 </nav>
@@ -128,7 +128,11 @@
 
         </div>
     </div>
-    <section class="price">
+
+
+
+
+    <section class="price" id="price">
         <img src="{{ url_for('static', filename='img/banner-plane-left.png') }}" class="plane left-to-right-banner" alt="Banner Plane 1">
         <img src="{{ url_for('static', filename='img/banner-plane-right.png') }}" class="plane right-to-left-banner" alt="Banner Plane 2">
         <div class="price-content">
@@ -136,7 +140,11 @@
             <h2>🌟Pay nothing.🌟</h2>
         </div>
     </section>
-    <section class="faq">
+
+
+
+
+    <section class="faq" id="faq">
         <div class="background">
             <div class="faq-content">
                 <div class="faq-header">
@@ -263,7 +271,7 @@
     
     
     
-    
+  
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     <script>
         // adding background image
