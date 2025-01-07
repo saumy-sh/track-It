@@ -129,9 +129,6 @@ def create_app():
 
         
 
-    # try:
-    #     db.session.query(User).all()
-    # except OperationalError as err:
-    #     print("Connection error at backend side!",err)
+
     return app
 
