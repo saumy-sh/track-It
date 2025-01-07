@@ -83,30 +83,32 @@ def create_app():
                                                                 "price_change":data["price_change"],
                                                                 "terminal_takeoff":data["terminal_takeoff"],
                                                                 "terminal_landing":data["terminal_landing"],
-                                                                "duration":data["duration"]
+                                                                "duration":data["duration"],
+                                                                "take_off_date":data["take_off_date"],
+                                                                "landing_date":data["landing_date"]
                                                                 }
                                                             })
                             
                             if data["trackCheap"]:
-                                subject = f"✨ Hot Deal Alert! ✈️ Cheapest Flight on {data["date"]}: {data["flight_no"]} from {data["source"]} to {data["destination"]}! 💸"
+                                subject = f"✨ Hot Deal Alert! ✈️ Cheapest Flight on {data['date']}: {data['flight_no']} from {data['source']} to {data['destination']}! 💸"
                             elif data["price_change"] == "up":
-                                subject = f"Price Spike Alert! 🚀 Flight {data["flight_no"]} from {data["source"]} to {data["destination"]} Just Got More Expensive! 💰"
+                                subject = f"Price Spike Alert! 🚀 Flight {data['flight_no']} from {data['source']} to {data['destination']} Just Got More Expensive! 💰"
                             elif data["price_change"] == "down":
-                                subject = f"Great News! ✈️ Flight {data["flight_no"]} from {data["source"]} to {data["destination"]} is Now Cheaper! 🎉"
+                                subject = f"Great News! ✈️ Flight {data['flight_no']} from {data['source']} to {data['destination']} is Now Cheaper! 🎉"
                             else:
                                 pass
                             message_body = f"""
                             Flight Details ✈️
 
-                            Flight Number: {data["flight_no"]}
-                            Route: {data["source"]} ➡️ {data["destination"]}
-                            Date: {data["date"]}
-                            Take Off Time: {data["take_off"]}
-                            Landing Time: {data["landing_at"]}
-                            Take Off Terminal: {data["terminal_takeoff"]}
-                            Landing Terminal: {data["terminal_landing"]}
+                            Flight Number: {data['flight_no']}
+                            Route: {data['source']} ➡️ {data['destination']}
+                            Date: {data['date']}
+                            Take Off Time: {data['take_off']} {data['take_off_date']}
+                            Landing Time: {data['landing_at']} {data['landing_date']}
+                            Take Off Terminal: {data['terminal_takeoff']}
+                            Landing Terminal: {data['terminal_landing']}
 
-                            Current Price: 💸{data["price"].replace("\\u20b9", "₹")}💸
+                            Current Price: 💸{data['price'].replace('\\u20b9', '₹')}💸
 
                             Safe travels! ✈️
                             """                            
