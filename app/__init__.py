@@ -97,6 +97,7 @@ def create_app():
                                 subject = f"Great News! ✈️ Flight {data['flight_no']} from {data['source']} to {data['destination']} is Now Cheaper! 🎉"
                             else:
                                 pass
+                            cleaned_price = data['price'].replace('\\u20b9', '₹')
                             message_body = f"""
                             Flight Details ✈️
 
@@ -108,7 +109,7 @@ def create_app():
                             Take Off Terminal: {data['terminal_takeoff']}
                             Landing Terminal: {data['terminal_landing']}
 
-                            Current Price: 💸{data['price'].replace('\\u20b9', '₹')}💸
+                            Current Price: 💸{cleaned_price}💸
 
                             Safe travels! ✈️
                             """                            
