@@ -1,7 +1,7 @@
 from flask import Flask
 from dotenv import load_dotenv
 import os
-from flask_pymongo import PyMongo,MongoClient
+from flask_pymongo import PyMongo
 from flask_mail import Mail,Message
 import json
 from flask_apscheduler import APScheduler
