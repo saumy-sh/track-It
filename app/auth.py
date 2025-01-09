@@ -234,16 +234,7 @@ def dashboard():
                 logging.error("timeout")
                 return "timeout"
             
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            logging.info("loop found!")
-            # Use the existing event loop
-            results = loop.create_task(run_script())
-            asyncio.wait(results)
-        else:
-            # Create a new event loop if one doesn't exist
-            results = "null"
-            logging.info("no existingg loop!")
+        results = cheapest_flight(driver,source,destination,optimised_date,option,direct=direct_flight)
 
         # results format: [flight_no with flight name, non-stop tags, price, take-off time, land time, flight duration, takeoff terminal, landing terminal, takeoff date, landing date, booking_url]
         logging.info(f"result: {results}")
