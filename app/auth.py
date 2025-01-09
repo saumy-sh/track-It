@@ -235,7 +235,7 @@ def dashboard():
                 return "timeout"
             
         results = cheapest_flight(driver,source,destination,optimised_date,option,direct=direct_flight)
-
+        driver.quit()
         # results format: [flight_no with flight name, non-stop tags, price, take-off time, land time, flight duration, takeoff terminal, landing terminal, takeoff date, landing date, booking_url]
         logging.info(f"result: {results}")
         if track_cheap:
