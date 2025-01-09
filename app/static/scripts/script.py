@@ -218,6 +218,7 @@ def doctorNurses_selector(driver):
     ).click()
 
 def cheapest_flight(driver,source,destination,departure_date,option,direct=False):
+    logging.info("started fetching!")
     results = {"value":"null"}
     try:
 
