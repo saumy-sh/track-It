@@ -66,8 +66,8 @@ def create_headless_driver():
     chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36")
     chrome_options.add_argument("--disable-notifications")
 
-    service = Service(PATH)
-    driver = webdriver.Chrome(service=service,options=chrome_options)
+    # service = Service(PATH)
+    driver = webdriver.Chrome(options=chrome_options)
     return driver
 
 
