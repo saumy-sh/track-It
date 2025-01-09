@@ -234,13 +234,16 @@ def dashboard():
                 logging.error("timeout")
                 return "timeout"
             
-        # creating task for flight search for monitoring purpose
-        # loop = asyncio.new_event_loop()
-        # asyncio.set_event_loop(loop)
-        # task = loop.create_task(run_script())
-        # session['test'] = "test"
-        # session.modified = True
-        results = asyncio.run(run_script())
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            logging.info("loop found!")
+            # Use the existing event loop
+            results = loop.create_task(run_script())
+            asyncio.wait(results)
+        else:
+            # Create a new event loop if one doesn't exist
+            results = "null"
+            logging.info("no existingg loop!")
 
         # results format: [flight_no with flight name, non-stop tags, price, take-off time, land time, flight duration, takeoff terminal, landing terminal, takeoff date, landing date, booking_url]
         logging.info(f"result: {results}")
