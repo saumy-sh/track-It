@@ -10,6 +10,9 @@ from selenium.common.exceptions import TimeoutException,NoSuchElementException,W
 import time
 import random
 from datetime import datetime
+import logging
+
+logging.basicConfig(level=logging.INFO)
 
 returnDate_xpath = "//label[@ng-keyup='DPOnFocus(1);']"
 
@@ -63,8 +66,8 @@ def create_headless_driver():
     chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36")
     chrome_options.add_argument("--disable-notifications")
 
-    # service = Service(PATH, log_output="chromedriver.log")
-    driver = webdriver.Chrome(options=chrome_options)
+    service = Service(PATH)
+    driver = webdriver.Chrome(service=service,options=chrome_options)
     return driver
 
 
@@ -262,7 +265,7 @@ def cheapest_flight(driver,source,destination,departure_date,option,direct=False
         elif option == "doctors_nurses":
             doctorNurses_selector(driver)
         else:
-            print("No option selected")
+            logging.info("No option selected")
 
 
         
@@ -272,7 +275,7 @@ def cheapest_flight(driver,source,destination,departure_date,option,direct=False
             EC.presence_of_element_located((By.XPATH,"//input[@value='Search']"))
         ).click()
 
-        
+        logging.info("now redirected to flight info page")
         # selecting flight info that we need
         try:
             
@@ -285,12 +288,11 @@ def cheapest_flight(driver,source,destination,departure_date,option,direct=False
                 EC.presence_of_all_elements_located((By.XPATH,"//div[@class='row text-center py-2']"))
             )
             num = len(root_elements)
-            print("flights:",num)
+            logging.info("flights:",num)
             
             result_value = []
             if num > 10 :
                 num = min(10,num)
-            print(num)
             url = driver.current_url
             # results format: [flight_no with flight name, non-stop tags, price, take-off time, land time, flight duration, takeoff terminal, landing terminal, takeoff date, landing date, booking_url]
             for i in range(0,num):
@@ -309,11 +311,11 @@ def cheapest_flight(driver,source,destination,departure_date,option,direct=False
                 except WebDriverException:
                     tag = root_elements[i].find_element(By.XPATH,'.//span[contains(@class,"lbl-bold responsive-dblock ng-binding ng-scope")]').text
 
-                print(flight_no)
-                print(airport_places)
-                print(dates)
-                print(duration)
-                print(tag)
+                logging.info(flight_no)
+                logging.info(airport_places)
+                logging.info(dates)
+                logging.info(duration)
+                logging.info(tag)
                 result_value.append([flight_no,tag,price_element,time_elements[0].text,time_elements[1].text,duration,airport_places[0],airport_places[1],dates[0],dates[1],url])
                 
 
@@ -326,7 +328,7 @@ def cheapest_flight(driver,source,destination,departure_date,option,direct=False
         
 
     except WebDriverException as err:
-        print(f"gadbad ho gai: {err}")
+        logging.error(f"gadbad ho gai: {err}")
         results["value"] = "error"
         driver.quit()
         return results["value"]

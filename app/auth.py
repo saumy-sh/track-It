@@ -10,9 +10,10 @@ import json
 from bson.json_util import dumps
 import asyncio
 from flask_mail import Message
+import logging
 
 
-
+logging.basicConfig(level=logging.INFO)
 
 
 
@@ -53,9 +54,9 @@ def test_connection():
     try:
         # Test connection
         print(mongo.db.list_collection_names())  # This will raise an exception if the connection fails
-        print("MongoDB connection is successful")
+        logging.info("MongoDB connection is successful")
     except Exception as e:
-        print(f"MongoDB connection failed: {e}")
+        logging.error(f"MongoDB connection failed: {e}")
     return None
 
 
@@ -168,7 +169,7 @@ def dashboard():
         email = session.get("mail")
         track_cheap = search_query.get("track_cheap")
     
-        print(f"Query data:{source},{destination},{date},{option},{direct_flight},{trackerList},{removeTrackerList}")
+        logging.info(f"Query data:{source},{destination},{date},{option},{direct_flight},{trackerList},{removeTrackerList}")
         if trackerList:
             flight_infos = json.loads(trackerList)
             
@@ -196,13 +197,13 @@ def dashboard():
                         "trackCheap":False
                     })
                 except Exception as e:
-                    print(f"An error occured:{e}")   
+                    logging.error(f"An error occured:{e}")   
         else:
-            print("previous result was not list")
+            logging.info("previous result was not list")
         if removeTrackerList:
             remove_tracker = json.loads(removeTrackerList)
             for flight in remove_tracker:
-                print(flight["date"],email,flight["flight_no"])
+                logging.info(flight["date"],email,flight["flight_no"])
                 try:
                     deleted_result = mongo.db.usersearch.delete_one(
                         {
@@ -210,14 +211,14 @@ def dashboard():
                             "date":flight["date"],
                             "flight_no":flight["flight_no"]
                         })
-                    print(f"Deleted {deleted_result.deleted_count} document(s)")
+                    logging.info(f"Deleted {deleted_result.deleted_count} document(s)")
 
                 except Exception as e:
-                    print(f"An error occured:{e}")
+                    logging.error(f"An error occured:{e}")
             userdata = mongo.db.usersearch.find({"email":email},{"_id":0,"email":0})  
         optimised_date = date_optimiser(date)
         
-        print(optimised_date)
+        logging.info(optimised_date)
         if direct_flight == "on":
             direct_flight = True
         else:
@@ -230,7 +231,7 @@ def dashboard():
                                         timeout=120)
             except TimeoutError:
                 driver.quit()
-                print("timeout")
+                logging.error("timeout")
                 return "timeout"
             
         # creating task for flight search for monitoring purpose
@@ -242,7 +243,7 @@ def dashboard():
         results = asyncio.run(run_script())
 
         # results format: [flight_no with flight name, non-stop tags, price, take-off time, land time, flight duration, takeoff terminal, landing terminal, takeoff date, landing date, booking_url]
-
+        logging.info(f"result: {results}")
         if track_cheap:
             try:
                 mongo.db.usersearch.insert_one({
@@ -267,7 +268,7 @@ def dashboard():
                     "trackCheap":True
                 })
             except Exception as e:
-                print(f"Can't track cheapest:{e}") 
+                logging.error(f"Can't track cheapest:{e}") 
 
         # print(results)
         session["prev_query"] = {"source":source, "destination":destination, "date":date, "option":option, "direct":direct_flight}
@@ -293,6 +294,7 @@ def dashboard():
                         direct_flight=direct_flight,
                         track_cheap=track_cheap)
     else:
+        logging.info("get request sent!")
         return render_template("dashboard.html",result=[])
 
 
