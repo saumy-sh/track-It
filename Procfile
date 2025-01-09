@@ -1,1 +1,1 @@
-waitress-serve --port=$PORT main:app
+waitress-serve --threads=8 main:app
