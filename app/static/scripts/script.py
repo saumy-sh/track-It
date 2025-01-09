@@ -232,7 +232,7 @@ def cheapest_flight(driver,source,destination,departure_date,option,direct=False
         one_way(driver,actions)
 
 
-
+        logging.info("one way done")
 
         # select direct flight option
         if direct:
@@ -242,18 +242,21 @@ def cheapest_flight(driver,source,destination,departure_date,option,direct=False
 
         # selecting source
         source_selector(source,driver) 
+        logging.info("source")
         
 
 
 
         # selecting destination 
         destination_selector(destination,driver)
+        logging.info("destination")
 
 
 
         # selecting departure date
         departureDate_xpath = "//label[@ng-keyup='DPOnFocus(0);']"
         date_selector(departure_date,driver,departureDate_xpath,"dep")
+        logging.info("date")
 
 
         # checking for various checkboxes
