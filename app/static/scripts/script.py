@@ -21,7 +21,7 @@ returnDate_xpath = "//label[@ng-keyup='DPOnFocus(1);']"
 # source,destination,date_from,date_to
 
 TARGET_SITE = "https://www.happyfares.in/?utm_source=Google&campaign_ID=12305358667&pl=&key_word_identifier=happyfares&ad_group_id_identifier=119036993513&gad_source=1&gclid=CjwKCAiA9vS6BhA9EiwAJpnXw_-ZSkoIV7OsWc_cypjmWTjx0_i5LsN3jchfN4Wt16gqmBsTXeZGXBoCHO4QAvD_BwE"
-PATH = '/usr/bin/chromedriver'
+PATH = '/opt/render/project/src/app/static/scripts/chromedriver-linx64/chromedriver.exe'
 RETRY_ATTEMPT = 3
 
 
