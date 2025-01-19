@@ -20,8 +20,9 @@ returnDate_xpath = "//label[@ng-keyup='DPOnFocus(1);']"
 
 # source,destination,date_from,date_to
 
-TARGET_SITE = "https://www.happyfares.in/?utm_source=Google&campaign_ID=12305358667&pl=&key_word_identifier=happyfares&ad_group_id_identifier=119036993513&gad_source=1&gclid=CjwKCAiA9vS6BhA9EiwAJpnXw_-ZSkoIV7OsWc_cypjmWTjx0_i5LsN3jchfN4Wt16gqmBsTXeZGXBoCHO4QAvD_BwE"
-PATH = './app/static/scripts/chromedriver-linx64/chromedriver.exe'
+# TARGET_SITE = "https://www.happyfares.in/?utm_source=Google&campaign_ID=12305358667&pl=&key_word_identifier=happyfares&ad_group_id_identifier=119036993513&gad_source=1&gclid=CjwKCAiA9vS6BhA9EiwAJpnXw_-ZSkoIV7OsWc_cypjmWTjx0_i5LsN3jchfN4Wt16gqmBsTXeZGXBoCHO4QAvD_BwE"
+TARGET_SITE = "https://expedia.com"
+PATH = './app/static/scripts/chromedriver-win64/chromedriver.exe'
 RETRY_ATTEMPT = 3
 
 
@@ -56,7 +57,7 @@ def check_date(date):
 
 def create_headless_driver():
     chrome_options = Options()
-    chrome_options.add_argument("--headless")  # Run in headless mode
+    # chrome_options.add_argument("--headless")  # Run in headless mode
     chrome_options.add_argument("--no-sandbox")  # Recommended for Docker
     chrome_options.add_argument("--disable-dev-shm-usage")  # Avoid shared memory issues
     chrome_options.add_argument("--disable-gpu")  # Optional for performance
@@ -66,8 +67,8 @@ def create_headless_driver():
     chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36")
     chrome_options.add_argument("--disable-notifications")
 
-    # service = Service(PATH)
-    driver = webdriver.Chrome(options=chrome_options)
+    service = Service(PATH)
+    driver = webdriver.Chrome(service=service,options=chrome_options)
     return driver
 
 
@@ -104,6 +105,12 @@ def solve_captcha(driver):
     print("#################DONE#####################")
     time.sleep(5)
 #######################################################################      
+
+def select_flight(driver,action):
+    flight_xpath = "//a[@class='uitk-tab-anchor uitk-tab-anchor-selected']"
+    WebDriverWait(driver,15).until(
+        EC.presence_of_element_located((By.XPATH,flight_xpath))
+    ).click()
 
 
 def one_way(driver,actions):
@@ -228,6 +235,9 @@ def cheapest_flight(driver,source,destination,departure_date,option,direct=False
         # creating cursor like element
         actions = ActionChains(driver)
 
+
+        # selecting flight option
+        select_flight(driver,actions)
         # select one-way flight
         one_way(driver,actions)
 

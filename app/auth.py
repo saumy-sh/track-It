@@ -5,7 +5,8 @@ from authlib.integrations.flask_client import OAuth
 from dotenv import load_dotenv
 import os
 import secrets
-from app.static.scripts.script import cheapest_flight,date_optimiser,create_headless_driver,flight_booking
+from app.static.scripts.web_scraper import cheapest_flight,date_optimiser,create_headless_driver,flight_booking
+from app.static.scripts.APIcaller import search_flight
 import json
 from bson.json_util import dumps
 import asyncio
@@ -162,17 +163,18 @@ def dashboard():
         source = search_query.get("from")
         destination = search_query.get("to")
         date = search_query.get("departure-date")
-        direct_flight = search_query.get("direct_flight")
-        option = search_query.get("options")
+        # direct_flight = search_query.get("direct_flight")
+        # option = search_query.get("options")
         trackerList = search_query.get("trackerStorage")
         removeTrackerList = search_query.get("remove_trackers")
         email = session.get("mail")
         track_cheap = search_query.get("track_cheap")
     
-        logging.info(f"Query data:{source},{destination},{date},{option},{direct_flight},{trackerList},{removeTrackerList}")
+        logging.info(f"Query data:{source},{destination},{date},{trackerList},{removeTrackerList}")
         if trackerList:
             flight_infos = json.loads(trackerList)
-            
+
+            # results format: [flight logo url, fligh name and flight no, price, take-off time - land time(duration with tag), takeoff terminal, landing terminal, date, booking_url]
             for flight in flight_infos:
                 try:
                     mongo.db.usersearch.insert_one({
@@ -180,24 +182,20 @@ def dashboard():
                         "source":session["prev_query"]["source"],
                         "destination":session["prev_query"]["destination"],
                         "date":session["prev_query"]["date"],
-                        "take_off":flight[3],
-                        "landing_at":flight[4],
-                        "take_off_date":flight[8],
-                        "landing_date":flight[9],
-                        "terminal_takeoff":flight[6],
-                        "terminal_landing":flight[7],
-                        "duration":flight[5],
-                        "flight_no":flight[0],
-                        "tag":flight[1],
+                        "flight_no":flight[1],
+                        "flight_url":flight[0],
+                        "flight_time_info":flight[3],
+                        "airport_takeoff":flight[6],
+                        "airport_landing":flight[7],
                         "price":flight[2],
-                        "option":session["prev_query"]["option"],
-                        "direct":session["prev_query"]["direct"],
+                        # "option":session["prev_query"]["option"],
+                        # "direct":session["prev_query"]["direct"],
                         "url":flight[10],
                         "price_change":"neutral",
                         "trackCheap":False
                     })
                 except Exception as e:
-                    logging.error(f"An error occured:{e}")   
+                    logging.error(f"An error occured:{e}")
         else:
             logging.info("previous result was not list")
         if removeTrackerList:
@@ -216,9 +214,7 @@ def dashboard():
                 except Exception as e:
                     logging.error(f"An error occured:{e}")
             userdata = mongo.db.usersearch.find({"email":email},{"_id":0,"email":0})  
-        optimised_date = date_optimiser(date)
         
-        logging.info(optimised_date)
         if direct_flight == "on":
             direct_flight = True
         else:
@@ -227,16 +223,15 @@ def dashboard():
         # function to run cheapest_flight function asynchronously
         async def run_script():
             try:
-                return await asyncio.wait_for(asyncio.to_thread(cheapest_flight,driver,source,destination,optimised_date,option,direct=direct_flight),
-                                        timeout=120)
+                return await asyncio.wait_for(asyncio.to_thread(cheapest_flight,driver,source,destination,date,direct=direct_flight),
+                                        timeout=30)
             except TimeoutError:
                 driver.quit()
                 logging.error("timeout")
                 return "timeout"
         logging.info("driver created!")
-        results = cheapest_flight(driver,source,destination,optimised_date,option,direct=direct_flight)
-        driver.quit()
-        # results format: [flight_no with flight name, non-stop tags, price, take-off time, land time, flight duration, takeoff terminal, landing terminal, takeoff date, landing date, booking_url]
+        results = cheapest_flight(driver,source,destination,date,direct=direct_flight)
+        # results format: [flight logo url, fligh name and flight no, price, take-off time - land time(duration with tag), takeoff terminal, landing terminal, date, booking_url]
         logging.info(f"result: {results}")
         if track_cheap:
             try:
