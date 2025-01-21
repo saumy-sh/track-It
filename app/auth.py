@@ -163,6 +163,8 @@ def dashboard():
         source = search_query.get("from")
         destination = search_query.get("to")
         date = search_query.get("departure-date")
+        adults = search_query.get("adults")
+        fair_type = search_query.get("fair_type")
         # direct_flight = search_query.get("direct_flight")
         # option = search_query.get("options")
         trackerList = search_query.get("trackerStorage")
@@ -170,11 +172,11 @@ def dashboard():
         email = session.get("mail")
         track_cheap = search_query.get("track_cheap")
     
-        logging.info(f"Query data:{source},{destination},{date},{trackerList},{removeTrackerList}")
+        logging.info(f"Query data:{source},{destination},{date},{adults},{trackerList},{removeTrackerList}")
         if trackerList:
             flight_infos = json.loads(trackerList)
 
-            # results format: [flight logo url, fligh name and flight no, price, take-off time - land time(duration with tag), takeoff terminal, landing terminal, date, booking_url]
+            # results format: [flight logo url, fligh name and flight no, price, duration, takeoff terminal, landing terminal, takeoff time, landing time, date, booking_url]
             for flight in flight_infos:
                 try:
                     mongo.db.usersearch.insert_one({
@@ -182,15 +184,17 @@ def dashboard():
                         "source":session["prev_query"]["source"],
                         "destination":session["prev_query"]["destination"],
                         "date":session["prev_query"]["date"],
+                        "adults":session["prev_query"]["adults"],
+                        "cabin_class":session["prev_query"]["cabin_class"],
                         "flight_no":flight[1],
                         "flight_url":flight[0],
-                        "flight_time_info":flight[3],
-                        "airport_takeoff":flight[6],
-                        "airport_landing":flight[7],
+                        "duration":flight[3],
+                        "airport_takeoff":flight[4],
+                        "airport_landing":flight[5],
+                        "takeoff_time":flight[6],
+                        "landing_time":flight[7],
                         "price":flight[2],
-                        # "option":session["prev_query"]["option"],
-                        # "direct":session["prev_query"]["direct"],
-                        "url":flight[10],
+                        "url":flight[-1],
                         "price_change":"neutral",
                         "trackCheap":False
                     })
@@ -215,23 +219,23 @@ def dashboard():
                     logging.error(f"An error occured:{e}")
             userdata = mongo.db.usersearch.find({"email":email},{"_id":0,"email":0})  
         
-        if direct_flight == "on":
-            direct_flight = True
-        else:
-            direct_flight = False
-        driver = create_headless_driver()
+        # if direct_flight == "on":
+        #     direct_flight = True
+        # else:
+        #     direct_flight = False
+        # driver = create_headless_driver()
         # function to run cheapest_flight function asynchronously
-        async def run_script():
-            try:
-                return await asyncio.wait_for(asyncio.to_thread(cheapest_flight,driver,source,destination,date,direct=direct_flight),
-                                        timeout=30)
-            except TimeoutError:
-                driver.quit()
-                logging.error("timeout")
-                return "timeout"
-        logging.info("driver created!")
-        results = cheapest_flight(driver,source,destination,date,direct=direct_flight)
-        # results format: [flight logo url, fligh name and flight no, price, take-off time - land time(duration with tag), takeoff terminal, landing terminal, date, booking_url]
+        # async def run_script():
+        #     try:
+        #         return await asyncio.wait_for(asyncio.to_thread(cheapest_flight,driver,source,destination,date,direct=direct_flight),
+        #                                 timeout=30)
+        #     except TimeoutError:
+        #         driver.quit()
+        #         logging.error("timeout")
+        #         return "timeout"
+    
+        results = search_flight(source,destination,date,adults,fair_type)
+        # results format: [flight logo url, fligh name and flight no, price, duration, takeoff terminal, landing terminal, takeoff time, landing time, date, booking_url]
         logging.info(f"result: {results}")
         if track_cheap:
             try:
@@ -240,19 +244,17 @@ def dashboard():
                     "source":source,
                     "destination":destination,
                     "date":date,
-                    "take_off":results[0][3],
-                    "landing_at":results[0][4],
-                    "take_off_date":results[0][8],
-                    "landing_date":results[0][9],
-                    "terminal_takeoff":results[0][6],
-                    "terminal_landing":results[0][7],
-                    "duration":results[0][5],
-                    "flight_no":results[0][0],
-                    "tag":results[0][1],
+                    "adults":session["prev_query"]["adults"],
+                    "cabin_class":session["prev_query"]["cabin_class"],
+                    "flight_no":results[0][1],
+                    "flight_url":results[0][0],
+                    "duration":results[0][3],
+                    "airport_takeoff":results[0][4],
+                    "airport_landing":results[0][5],
+                    "takeoff_time":results[0][6],
+                    "landing_time":results[0][7],
                     "price":results[0][2],
-                    "option":option,
-                    "direct":direct_flight,
-                    "url":results[0][10],
+                    "url":results[0][-1],
                     "price_change":"neutral",
                     "trackCheap":True
                 })
@@ -260,7 +262,7 @@ def dashboard():
                 logging.error(f"Can't track cheapest:{e}") 
 
         # print(results)
-        session["prev_query"] = {"source":source, "destination":destination, "date":date, "option":option, "direct":direct_flight}
+        session["prev_query"] = {"source":source, "destination":destination, "date":date, "adults":adults, "cabin_class":fair_type}
 
 
 
@@ -279,8 +281,8 @@ def dashboard():
                         source=source,
                         destination=destination,
                         date=date,
-                        option=option,
-                        direct_flight=direct_flight,
+                        adults=adults,
+                        cabin_class=fair_type,
                         track_cheap=track_cheap)
     else:
         logging.info("get request sent!")

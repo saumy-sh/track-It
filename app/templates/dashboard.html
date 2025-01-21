@@ -103,8 +103,28 @@
                                 <input type="date" class="form-control" id="return-date">
                             </div>
                             <!-- Checkboxes -->
-                            <div class="row mt-2">
-                                <div class="form-check col-sm-2 text-start">
+                            <div class="row mt-2" style="justify-content: center;display: flex;flex-direction: column;">
+                                <label for="adults">Adults:</label>
+                                <select id="adults" name="adults">
+                                    <option value="1">1 Adult</option>
+                                    <option value="2">2 Adults</option>
+                                    <option value="3">3 Adults</option>
+                                    <option value="4">4 Adults</option>
+                                    <option value="5">5 Adults</option>
+                                    <option value="6">6 Adults</option>
+                                    <option value="7">7 Adults</option>
+                                    <option value="8">8 Adults</option>
+                                    <option value="9">9 Adults</option>
+                                    <option value="10">10 Adults</option>
+                                </select>
+                                <label for="fair_type">Type</label>
+                                <select id="fair_type" name="fair_type">
+                                    <option value="COACH">Economy</option>
+                                    <option value="PREMIUM_ECONOMY">Premium Economy</option>
+                                    <option value="BUSINESS">Business</option>
+                                    <option value="FIRST">First Class</option>
+                                </select>
+                                <!-- <div class="form-check col-sm-2 text-start">
                                     <input type="checkbox" class="form-check-input" id="directFlight" name="direct_flight">
                                     <label for="directFlight" class="form-check-label small">Direct Flight</label>
                                 </div>
@@ -123,7 +143,7 @@
                                 <div class="form-check col-sm-2 text-start">
                                     <input type="checkbox" class="form-check-input" id="doctorsNurse" name="option" value="doctors_nurses">
                                     <label for="doctors_nurse" class="form-check-label small">Doctors & Nurses</label>
-                                </div>
+                                </div> -->
                                 <div class="form-check col-sm-2 text-start">
                                     <input type="checkbox" class="form-check-input" id="trackCheap" name="track_cheap">
                                     <label for="trackCheap" class="form-check-label small">Track Cheapest</label>
@@ -170,52 +190,35 @@
             <div id="results">
                 {% if result and result!="null" and result!="error" and result!="timeout" %}
                     {% for flight in result %}
-                    <!-- results format: [flight_no with flight name, non-stop tags, price, take-off time, land time, flight duration, takeoff terminal, landing terminal, takeoff date, landing date, booking_url] -->
-                    <div class="flight-info-neutral" style="width: 800px; color: black; border-radius: 5px; justify-content: center; align-items: center;">
-                        <!-- Flight No -->
-                        <p style="text-align: left; font-size: 1.2rem;">
-                            ✈️<span id="flight-no">{{ flight[0] }}</span>
-                        </p>
-                        <hr style="width: 800px;">
-                        <div class="flight-details" style="display: flex;justify-content: center;flex-direction: row;">
-                            
-                            <!-- Take-Off details -->
-                            <div style="display: flex; justify-content: center; flex-direction: column; font-size: 1rem; margin-right: 1rem;">
-                                <p id="takeoff-time">🛫{{ flight[3] }}</p>
-                                <p id="take-off-terminal">{{ flight[6] }}</p>
-                                <p id="take-off-date">{{ flight[8] }}</p>
+                    <!-- results format: [flight logo url, fligh name and flight no, price, duration, takeoff terminal, landing terminal, takeoff time, landing time, date, booking_url] -->
+                    <div class="flight-info-neutral" style="width: 800px; color: black; border-radius: 5px; justify-content: center; align-items: center; display: flex;flex-direction: column;padding: 0;">
+                           
+
+                        <div class="flight-no-date" style="display: flex;flex-direction: row; justify-content: left;gap: 10rem;margin-left: 0;">
+                            <div class="flight" style="display: flex; flex-direction: row;justify-content: left;gap: 1rem;">
+                                <img src="{{ flight[0] }}" alt="{{ flight[1] }}" width="30px" height="30px">
+                                <p>{{ flight[1] }}</p>
                             </div>
-
-                            <!-- In-between details -->
-                            <div style="display: flex; flex-direction: column; justify-content: center; gap: 2px; align-items: center;padding: 0px; margin: 0px;">
-                                <p id="duration" style="color: rgb(67, 231, 7);">{{ flight[5] }}</p>
-                                <hr style="width: 100px; line-height: 5px;align-self: center;">
-                                <p id="tag" style="color: rgb(67, 231, 7);">{{ flight[1] }}</p>
-                            </div>
-
-                            <!-- Landing details -->
-                            <div style="display: flex; justify-content: center; flex-direction: column; gap: 2px; margin-left: 1rem;">
-                                <p id="landing-time">🛬{{ flight[4] }}</p>
-                                <p id="landing-terminal">{{ flight[7] }}</p>
-                                <p id="landing-date">{{ flight[9] }}</p>
-                            </div>   
-
+                            <p>{{ flight[8] }}</p>
                         </div>
+
+                        <div class="time" style="display: flex;flex-direction: row;margin-left: 0;gap: 2rem;justify-content: left;">
+                            <p>{{ flight[6] }}</p>
+                            <p style="color: rgb(153, 242, 21);"><strong>-------</strong></p>
+                            <p>{{ flight[7] }}</p>
+                        </div>
+                        <div class="terminal" style="display: flex;flex-direction: row;justify-content: left;margin-left: 2rem;margin-right: 1rem;gap: 10rem;">
+                            <p>{{flight[4]}} - {{ flight[5] }}</p>
+                            <p style="color: red;">{{ flight[2] }}</p>
+                        </div>
+                        
                         <!-- Price and Tracking -->
-                        <div style="display: flex; justify-content: center; flex-direction: row; gap: 5rem;">
+                        <div style="display: flex; justify-content: space-between; flex-direction: row;margin-left: 2rem;margin-right: 2rem;gap: 5rem;">
                             <div>
                                 <input type="checkbox" name="tracker" value="{{ loop.index0 }}" onclick="addTracker(this)">
                                 <label for="tracker"><strong>Track It</strong></label>
                             </div>
-                            <p style="font-size: 1.2rem; font-weight: bold;">
-                                💰<strong>Price:</strong> <span id="price">{{ flight[2] }}</span>
-                            </p>
-                            <!-- <form action="/redirect_to_booking_page" method="post">
-                                <input value="{{ flight[0] }}" name="flight_no" hidden>
-                                <input value="{{ flight[4] }}" name="booking_url" hidden>
-                                <button type="submit" >Book</button>
-                            </form> -->
-                            <a href="{{ flight[10] }}" target="_blank" style="background-color: #007bff; color: #fff; padding: 0.5rem; border-radius: 5px;border-width: 0px; appearance: none; margin-bottom: 0.5rem;">Book Flight</a>
+                            <a href="{{ flight[9] }}" target="_blank" style="background-color: #007bff; color: #fff; padding: 0.5rem; border-radius: 5px;border-width: 0px; appearance: none; margin-bottom: 0.5rem;">Book Flight</a>
                         </div>
                         
                     </div>

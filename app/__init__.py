@@ -5,7 +5,8 @@ from flask_pymongo import PyMongo
 from flask_mail import Mail,Message
 import json
 from flask_apscheduler import APScheduler
-from app.static.scripts.script import price_tracker,create_headless_driver
+from app.static.scripts.web_scraper import price_tracker,create_headless_driver
+from app.static.scripts.APIcaller import search_flight
 from bson.json_util import dumps
 
 mail = Mail()
@@ -62,12 +63,107 @@ def create_app():
         with app.app_context():
             tracker_data = mongo.db.usersearch.find()
             results = []
+            tracked = []
             for data in tracker_data:
-                print(data)
-                driver = create_headless_driver()
-                results.append(price_tracker(driver,data))
-                driver.quit()
-                print(results)
+                source = data["source"]
+                destination = data["destination"]
+                date = data["date"]
+                adults = data["adults"]
+                cabin_class = data["cabin_class"]
+                flight_no = data["flight_no"]
+                price = data["price"]
+                takeoff_time = data["takeoff_time"]
+                track_cheap = data["trackCheap"]
+                target = [source,destination,date]
+                if not any(item[:3] == target for item in tracked):
+                    flight_result = search_flight(source,destination,date,adults,cabin_class)
+                    
+                    target.append(flight_result)
+                    tracked.append(target)
+                else:
+                    flight_result = search_flight(source,destination,date,adults,cabin_class)
+
+                for flight in flight_result:
+                    # results format: [flight logo url, fligh name and flight no, price, duration, takeoff terminal, landing terminal, takeoff time, landing time, date, booking_url]
+                    subject = None
+                    price_change = "neutral"
+                    if track_cheap:
+                        subject = f"✨ Hot Deal Alert! ✈️ Cheapest Flight on {data['date']}: {data['flight_no']} from {data['source']} to {data['destination']}! 💸"
+
+                        flight_data = flight
+                        break
+
+                    if flight_no == flight[1]:
+                        float_price_new = float(flight[2].replace("$",""))
+                        float_price_old = float(price.replace("$",""))
+
+                        if float_price_new > float_price_old:
+                            subject = f"Price Spike Alert! 🚀 Flight {data['flight_no']} from {data['source']} to {data['destination']} Just Got More Expensive! 💰"
+                            price_change = "up"
+                        elif float_price_new < float_price_old:
+                            subject = f"Great News! ✈️ Flight {data['flight_no']} from {data['source']} to {data['destination']} is Now Cheaper! 🎉"
+                            price_change = "down"
+                        # checking for flight time change
+                        if takeoff_time != flight[6]:
+                            subject = f"Important Update! ✈️ Flight {data['flight_no']} from {data['source']} to {data['destination']} Has a New Departure Time 🕒"
+                        
+                        flight_data = flight
+                        break
+                    
+                        
+
+                message_body = f"""
+                    Flight Details ✈️
+
+                    Flight Number: {flight_data[1]}
+                    Route: {source} ➡️ {destination}
+                    Date: {flight_data[8]}
+                    Take Off Time: {flight_data[6]}
+                    Landing Time: {flight_data[7]} 
+                    Take Off Terminal: {flight_data[4]}
+                    Landing Terminal: {flight_data[5]}
+
+                    Current Price: 💸{flight_data[2]}💸
+
+                    Safe travels! ✈️
+                """                            
+                recipient_mail = [data["email"]]
+                msg = Message(
+                    subject=subject,
+                    recipients = recipient_mail,
+                    body=message_body
+                )
+                try:
+                    if subject:
+                        mongo.db.usersearch.update_one({
+                            "flight_no":data["prev_flight_no"],
+                            "email":data["email"],
+                            "date":date,
+                            "source":source,
+                            "destination":destination
+                            },
+                            {"$set":{
+                                "flight_no":flight[1],
+                                "flight_url":flight[0],
+                                "duration":flight[3],
+                                "airport_takeoff":flight[4],
+                                "airport_landing":flight[5],
+                                "takeoff_time":flight[6],
+                                "landing_time":flight[7],
+                                "price":flight[2],
+                                "url":flight[-1],
+                                "price_change":price_change,
+                                }
+                            })
+                        mail.send(msg)
+                        print(f"Mail sent to {recipient_mail} :)")
+                except Exception as e:
+                    print("An error occured : ",e)
+
+
+                # driver = create_headless_driver()
+                # results.append(price_tracker(driver,data))
+                # driver.quit()
 
             
         
