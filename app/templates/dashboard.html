@@ -38,33 +38,37 @@
     <div class="background" id="background">
         <img src="{{ url_for('static', filename='img/plane-left.png') }}" class="plane left-to-right" alt="Plane 1">
         <img src="{{ url_for('static', filename='img/plane-right.png') }}" class="plane right-to-left" alt="Plane 2">
+        
         <div class="content">
+            <div class="message-window">
+                <!-- Display flash messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category,message in messages %}
+                        {% if category == 'error' %}
+                        <div class="flash-message">
+                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                            {% else %}
+                            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+                {% endwith %}
+            </div>
             <a href="/" class="logo-container">
                 <img src="{{ url_for('static', filename='img/icon.png') }}" alt="TrackIt Logo">
                 <h1>TrackIt</h1>
             </a>
             <br>
-            <!-- Display flash messages -->
-
-            {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category,message in messages %}
-                    {% if category == 'error' %}
-                    <div class="flash-message">
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                        {% else %}
-                        <div class="alert alert-success alert-dismissible fade show" role="alert">
-                            {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    </div>
-                    {% endif %}
-                {% endfor %}
-            {% endif %}
-            {% endwith %}
+            
+            
             <!-- Logout Button and Welcome Message -->
             <div class="d-flex justify-content-between align-items-center mb-4" style="margin-top: 1.5rem; margin-left: 13rem;">
                 <!-- Welcome Message -->
@@ -102,67 +106,53 @@
                                 <label for="return-date" class="form-label">Return Date</label>
                                 <input type="date" class="form-control" id="return-date">
                             </div>
-                            <!-- Checkboxes -->
-                            <div class="row mt-2" style="justify-content: center;display: flex;flex-direction: column;">
-                                <label for="adults">Adults:</label>
-                                <select id="adults" name="adults">
-                                    <option value="1">1 Adult</option>
-                                    <option value="2">2 Adults</option>
-                                    <option value="3">3 Adults</option>
-                                    <option value="4">4 Adults</option>
-                                    <option value="5">5 Adults</option>
-                                    <option value="6">6 Adults</option>
-                                    <option value="7">7 Adults</option>
-                                    <option value="8">8 Adults</option>
-                                    <option value="9">9 Adults</option>
-                                    <option value="10">10 Adults</option>
-                                </select>
-                                <label for="fair_type">Type</label>
-                                <select id="fair_type" name="fair_type">
-                                    <option value="COACH">Economy</option>
-                                    <option value="PREMIUM_ECONOMY">Premium Economy</option>
-                                    <option value="BUSINESS">Business</option>
-                                    <option value="FIRST">First Class</option>
-                                </select>
-                                <!-- <div class="form-check col-sm-2 text-start">
-                                    <input type="checkbox" class="form-check-input" id="directFlight" name="direct_flight">
-                                    <label for="directFlight" class="form-check-label small">Direct Flight</label>
+                        
+                            <!-- Adults, Fair Type, and Track Cheapest in One Row -->
+                            <div class="row mt-2" style="display: flex; align-items: center; gap: 1rem;">
+                                <div class="col" style="flex: 1;">
+                                    <label for="adults">Adults</label>
+                                    <select id="adults" name="adults" class="form-control">
+                                        <option value="1">1 Adult</option>
+                                        <option value="2">2 Adults</option>
+                                        <option value="3">3 Adults</option>
+                                        <option value="4">4 Adults</option>
+                                        <option value="5">5 Adults</option>
+                                        <option value="6">6 Adults</option>
+                                        <option value="7">7 Adults</option>
+                                        <option value="8">8 Adults</option>
+                                        <option value="9">9 Adults</option>
+                                        <option value="10">10 Adults</option>
+                                    </select>
                                 </div>
-                                <div class="form-check col-sm-2 text-start">
-                                    <input type="checkbox" class="form-check-input" id="student" name="option" value="student">
-                                    <label for="student" class="form-check-label small">Student</label>
+                                <div class="col" style="flex: 1;">
+                                    <label for="fair_type">Type</label>
+                                    <select id="fair_type" name="fair_type" class="form-control">
+                                        <option value="COACH">Economy</option>
+                                        <option value="PREMIUM_ECONOMY">Premium Economy</option>
+                                        <option value="BUSINESS">Business</option>
+                                        <option value="FIRST">First Class</option>
+                                    </select>
                                 </div>
-                                <div class="form-check col-sm-2 text-start">
-                                    <input type="checkbox" class="form-check-input" id="Defence" name="option" value="defence">
-                                    <label for="Defence" class="form-check-label small">Defence</label>
+                                <div class="col" style="flex: 1;">
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input" id="trackCheap" name="track_cheap">
+                                        <label for="trackCheap" class="form-check-label small">Track Cheapest</label>
+                                    </div>
                                 </div>
-                                <div class="form-check col-sm-2 text-start">
-                                    <input type="checkbox" class="form-check-input" id="seniorCitizen" name="option" value="senior_citizen">
-                                    <label for="seniorCitizen" class="form-check-label small">Senior Citizen</label>
-                                </div>
-                                <div class="form-check col-sm-2 text-start">
-                                    <input type="checkbox" class="form-check-input" id="doctorsNurse" name="option" value="doctors_nurses">
-                                    <label for="doctors_nurse" class="form-check-label small">Doctors & Nurses</label>
-                                </div> -->
-                                <div class="form-check col-sm-2 text-start">
-                                    <input type="checkbox" class="form-check-input" id="trackCheap" name="track_cheap">
-                                    <label for="trackCheap" class="form-check-label small">Track Cheapest</label>
-                                </div>
-                                <!-- <div class="form-check col-sm-2 text-start">
-                                    <input type="checkbox" class="form-check-input" id="roundTrip" name="round_trip">
-                                    <label for="roundTrip" class="form-check-label small">Round Trip</label>
-                                </div> -->
                             </div>
-                            <!-- handling which searches to be tracked -->
+                        
+                            <!-- Hidden Inputs -->
                             <input type="hidden" id="trackerStorage" name="trackerStorage"> 
-                            <!-- handling which trackers to  be removed -->
                             <input type="hidden" id="remove_trackers" name="remove_trackers">
-                            <!-- handling which trackers to  be removed -->
-                            <input type="hidden" id="options" name="options"> 
+                            <input type="hidden" id="adults_storage"> 
+                            <input type="hidden" id="cabin_class_storage"> 
+                        
+                            <!-- Submit Button -->
                             <div class="mb-3">
-                                <button type="submit" id="search" class="btn btn-primary">Search Flights</button>
+                                <button type="submit" id="search" class="btn btn-primary" style="margin-top: 1rem;">Search Flights</button>
                             </div>
                         </form>
+                        
                     </div>
                 </div>
             </div>
@@ -191,37 +181,46 @@
                 {% if result and result!="null" and result!="error" and result!="timeout" %}
                     {% for flight in result %}
                     <!-- results format: [flight logo url, fligh name and flight no, price, duration, takeoff terminal, landing terminal, takeoff time, landing time, date, booking_url] -->
-                    <div class="flight-info-neutral" style="width: 800px; color: black; border-radius: 5px; justify-content: center; align-items: center; display: flex;flex-direction: column;padding: 0;">
-                           
-
-                        <div class="flight-no-date" style="display: flex;flex-direction: row; justify-content: left;gap: 10rem;margin-left: 0;">
-                            <div class="flight" style="display: flex; flex-direction: row;justify-content: left;gap: 1rem;">
-                                <img src="{{ flight[0] }}" alt="{{ flight[1] }}" width="30px" height="30px">
-                                <p>{{ flight[1] }}</p>
+                    <div class="flight-info-neutral" style="width: 800px; color: black; border-radius: 5px; border: 1px solid #ccc; padding: 1rem; display: flex; flex-direction: row; align-items: center; gap: 1rem; position: relative;">
+                        <!-- Airline Logo and Name -->
+                        <div class="flight" style="display: flex; flex-direction: row; align-items: center; gap: 1rem;">
+                            <img src="{{ flight[0] }}" alt="{{ flight[1] }}" width="50px" height="50px" style="border-radius: 5px;">
+                            <p style="font-size: 16px; font-weight: bold; margin: 0;">{{ flight[1] }}</p>
+                        </div>
+                    
+                        <!-- Flight Details -->
+                        <div class="details" style="flex: 1; display: flex; flex-direction: column; gap: 0.5rem;">
+                            <!-- Time -->
+                            <div class="time" style="display: flex; align-items: center; gap: 2rem;">
+                                <p style="font-size: 18px; font-weight: bold; margin: 0;">{{ flight[6] }}</p>
+                                <p style="color: #4caf50; font-weight: bold; margin: 0;">&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;</p>
+                                <p style="font-size: 18px; font-weight: bold; margin: 0;">{{ flight[7] }}</p>
                             </div>
-                            <p>{{ flight[8] }}</p>
+                            <!-- Route -->
+                            <p style="font-size: 14px; color: #555; margin: 0;">{{ flight[4] }} - {{ flight[5] }}</p>
+                            <!-- Duration and Stops -->
+                            <p style="font-size: 14px; color: #4caf50; font-weight: bold; margin: 0;">{{ flight[3] }}</p>
                         </div>
-
-                        <div class="time" style="display: flex;flex-direction: row;margin-left: 0;gap: 2rem;justify-content: left;">
-                            <p>{{ flight[6] }}</p>
-                            <p style="color: rgb(153, 242, 21);"><strong>-------</strong></p>
-                            <p>{{ flight[7] }}</p>
+                    
+                        <!-- Price and Action -->
+                        <div class="price-action" style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem;">
+                            <p style="font-size: 20px; font-weight: bold; color: red; margin: 0;">{{ flight[2] }}</p>
+                            <a href="{{ flight[9] }}" target="_blank" style="text-decoration: none; background-color: #007bff; color: white; padding: 0.5rem 1rem; border-radius: 5px; font-size: 14px;">Book Flight</a>
                         </div>
-                        <div class="terminal" style="display: flex;flex-direction: row;justify-content: left;margin-left: 2rem;margin-right: 1rem;gap: 10rem;">
-                            <p>{{flight[4]}} - {{ flight[5] }}</p>
-                            <p style="color: red;">{{ flight[2] }}</p>
+                    
+                        <!-- Track It Checkbox -->
+                        <div style="position: absolute; bottom: 10px; left: 10px;">
+                            <input type="checkbox" name="tracker" value="{{ loop.index0 }}" onclick="addTracker(this)">
+                            <label for="tracker"><strong>Track It</strong></label>
                         </div>
-                        
-                        <!-- Price and Tracking -->
-                        <div style="display: flex; justify-content: space-between; flex-direction: row;margin-left: 2rem;margin-right: 2rem;gap: 5rem;">
-                            <div>
-                                <input type="checkbox" name="tracker" value="{{ loop.index0 }}" onclick="addTracker(this)">
-                                <label for="tracker"><strong>Track It</strong></label>
-                            </div>
-                            <a href="{{ flight[9] }}" target="_blank" style="background-color: #007bff; color: #fff; padding: 0.5rem; border-radius: 5px;border-width: 0px; appearance: none; margin-bottom: 0.5rem;">Book Flight</a>
+                    
+                        <!-- Date on Top Right -->
+                        <div style="position: absolute; top: 10px; right: 10px;">
+                            <p style="font-size: 14px; color: #555; margin: 0;">{{ flight[8] }}</p>
                         </div>
-                        
                     </div>
+                    
+                    
                     
                         
                     
@@ -244,56 +243,46 @@
                 {% set tracked_search = session["tracked_search"] | json_loads %}
                 {% if tracked_search!=[] %}
                 {% for flight in tracked_search %}
-                <div class="flight-info-{{flight['price_change']}}" style="width: 800px; color: black; border-radius: 5px; justify-content: center; align-items: center;">
-                    <!-- Flight No -->
+                <div class="flight-info-{{flight['price_change']}}" style="width: 800px; color: black; border-radius: 5px; border: 1px solid #ccc; padding: 1rem; display: flex; flex-direction: row; align-items: center; gap: 1rem; position: relative;margin-bottom: 1rem;">
+                    <!-- Airline Logo and Name -->
+                    <div class="flight" style="display: flex; flex-direction: row; align-items: center; gap: 1rem;">
+                        <img src="{{ flight['flight_url'] }}" alt="{{ flight['flight_no'] }}" width="50px" height="50px" style="border-radius: 5px;">
+                        <p style="font-size: 16px; font-weight: bold; margin: 0;">{{ flight["flight_no"] }}</p>
+                    </div>
                 
-                    <p style="text-align: left; font-size: 1.2rem;">
-                        <p id="flight-no">✈️{{ flight["flight_no"] }}</p>
-                    </p>
-                        
-                    <hr style="width: 800px;">
-                    <div class="flight-details" style="display: flex;justify-content: center;flex-direction: row;">
-                        
-                        <!-- Take-Off details -->
-                        <div style="display: flex; justify-content: center; flex-direction: column; font-size: 1rem; margin-right: 1rem;">
-                            <p id="takeoff-time">🛫{{ flight["take_off"] }}</p>
-                            <p id="take-off-terminal">{{ flight["terminal_takeoff"] }}</p>
-                            <p id="take-off-date">{{ flight["take_off_date"] }}</p>
+                    <!-- Flight Details -->
+                    <div class="details" style="flex: 1; display: flex; flex-direction: column; gap: 0.5rem;">
+                        <!-- Time -->
+                        <div class="time" style="display: flex; align-items: center; gap: 2rem;">
+                            <p style="font-size: 18px; font-weight: bold; margin: 0;">{{ flight["takeoff_time"] }}</p>
+                            <p style="color: #4caf50; font-weight: bold; margin: 0;">&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;</p>
+                            <p style="font-size: 18px; font-weight: bold; margin: 0;">{{ flight["landing_time"] }}</p>
                         </div>
-
-                        <!-- In-between details -->
-                        <div style="display: flex; flex-direction: column; justify-content: center; gap: 2px; align-items: center;padding: 0px; margin: 0px;">
-                            <p id="duration" style="color: rgb(67, 231, 7);">{{ flight["duration"] }}</p>
-                            <hr style="width: 100px; line-height: 5px;align-self: center;">
-                            <p id="tag" style="color: rgb(67, 231, 7);">{{ flight["tag"] }}</p>
-                        </div>
-
-                        <!-- Landing details -->
-                        <div style="display: flex; justify-content: center; flex-direction: column; gap: 2px; margin-left: 1rem;">
-                            <p id="landing-time">🛬{{ flight["landing_at"] }}</p>
-                            <p id="landing-terminal">{{ flight["terminal_landing"] }}</p>
-                            <p id="landing-date">{{ flight["landing_date"] }}</p>
-                        </div>   
-
+                        <!-- Route -->
+                        <p style="font-size: 14px; color: #555; margin: 0;">{{ flight["airport_takeoff"] }} - {{ flight["airport_landing"] }}</p>
+                        <!-- Duration and Stops -->
+                        <p style="font-size: 14px; color: #4caf50; font-weight: bold; margin: 0;">{{ flight["duration"] }}</p>
                     </div>
-                    <!-- Price and Tracking -->
-                    <div style="display: flex; justify-content: center; flex-direction: row; gap: 5rem;">
-                        <div>
-                            <input type="checkbox" name="tracker" value="{{ loop.index0 }}" onclick="addTracker(this)" checked>
-                            <label for="tracker"><strong>Track It</strong></label>
-                        </div>
-                        <p style="font-size: 1.2rem; font-weight: bold;">
-                            💰<strong>Price:</strong> <span id="price">{{ flight["price"] }}</span>
-                        </p>
-                        <!-- <form action="/redirect_to_booking_page" method="post">
-                            <input value="{{ flight[0] }}" name="flight_no" hidden>
-                            <input value="{{ flight[4] }}" name="booking_url" hidden>
-                            <button type="submit" >Book</button>
-                        </form> -->
-                        <a href="{{ flight['url'] }}" target="_blank" style="background-color: #007bff; color: #fff; padding: 0.5rem; border-radius: 5px;border-width: 0px; appearance: none; margin-bottom: 0.5rem;">Book Flight</a>
+                
+                    <!-- Price and Action -->
+                    <div class="price-action" style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem;">
+                        <p style="font-size: 20px; font-weight: bold; color: red; margin: 0;">{{ flight["price"] }}</p>
+                        <a href="{{ flight[9] }}" target="_blank" style="text-decoration: none; background-color: #007bff; color: white; padding: 0.5rem 1rem; border-radius: 5px; font-size: 14px;">Book Flight</a>
                     </div>
-                    
+                
+                    <!-- Track It Checkbox -->
+                    <div style="position: absolute; bottom: 10px; left: 10px;">
+                        <input type="checkbox" name="tracker" value="{{ loop.index0 }}" onclick="removeTracker(this)" checked>
+                        <label for="tracker"><strong>Track It</strong></label>
+                    </div>
+                
+                    <!-- Date on Top Right -->
+                    <div style="position: absolute; top: 10px; right: 10px;">
+                        <p style="font-size: 14px; color: #555; margin: 0;">{{ flight["date"] }}</p>
+                    </div>
                 </div>
+                    
+            
                 
                 {% endfor %}
                 {% else %}
@@ -336,6 +325,28 @@
         const resultElement = document.getElementById('results');
         const startingElmnt = document.getElementById('starting');
         const trackCheap = document.getElementById('trackCheap');
+        const cabin_class = document.getElementById('fair_type');
+        const adults = document.getElementById('adults');
+        // const adultsStorage = document.getElementById('adults_storage');
+        // const classStorage = document.getElementById('cabin_class_storage');
+        // function storeAdults(val){
+        //     adultsStorage.value = val;
+        // };
+
+        // function storeCabinClass(val){
+        //     classStorage.value = val;
+        // };
+
+        if ( "{{ adults }}" ){
+            adults.value = "{{ adults }}";
+        }
+        if ( "{{ cabin_class }}" ){
+            cabin_class.value = "{{ cabin_class }}";
+        }
+
+
+        console.log("{{ tracked_search }}");
+        
 
 
 
@@ -468,7 +479,7 @@
             document.getElementById('content-current-search').classList.toggle('active-content', activeTabId === 'current-search');
             document.getElementById('content-past-searches').classList.toggle('active-content', activeTabId === 'past-searches');
              
-        }
+        };
 
 
 

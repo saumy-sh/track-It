@@ -7,7 +7,8 @@ import json
 from flask_apscheduler import APScheduler
 from app.static.scripts.web_scraper import price_tracker,create_headless_driver
 from app.static.scripts.APIcaller import search_flight
-from bson.json_util import dumps
+# from bson.json_util import dumps
+from datetime import datetime
 
 mail = Mail()
 mongo = PyMongo(maxPoolSize=50,   # Maximum number of connections
@@ -64,7 +65,9 @@ def create_app():
             tracker_data = mongo.db.usersearch.find()
             results = []
             tracked = []
+            current_date = datetime.now().date()
             for data in tracker_data:
+                email = data["email"]
                 source = data["source"]
                 destination = data["destination"]
                 date = data["date"]
@@ -75,6 +78,7 @@ def create_app():
                 takeoff_time = data["takeoff_time"]
                 track_cheap = data["trackCheap"]
                 target = [source,destination,date]
+                formatted_date = datetime.strptime("%Y-%m-%d").date()
                 if not any(item[:3] == target for item in tracked):
                     flight_result = search_flight(source,destination,date,adults,cabin_class)
                     
@@ -86,7 +90,12 @@ def create_app():
                 for flight in flight_result:
                     # results format: [flight logo url, fligh name and flight no, price, duration, takeoff terminal, landing terminal, takeoff time, landing time, date, booking_url]
                     subject = None
+                    stale = False
                     price_change = "neutral"
+
+                    if formatted_date < current_date:
+                        stale = True
+                        break
                     if track_cheap:
                         subject = f"✨ Hot Deal Alert! ✈️ Cheapest Flight on {data['date']}: {data['flight_no']} from {data['source']} to {data['destination']}! 💸"
 
@@ -157,6 +166,14 @@ def create_app():
                             })
                         mail.send(msg)
                         print(f"Mail sent to {recipient_mail} :)")
+                    if stale:
+                        mongo.db.usersearch.delete_one({
+                                "email":email,
+                                "date":date,
+                                "flight_no":flight_no,
+                                "source":source,
+                                "destination":destination
+                            })
                 except Exception as e:
                     print("An error occured : ",e)
 
@@ -168,65 +185,65 @@ def create_app():
             
         
             
-            try:
-                for data in results:
-                    if data != None:
-                        if not data["stale"]:
-                            print(data)
-                            mongo.db.usersearch.update_one({"flight_no":data["prev_flight_no"]},
-                                                           {"$set":{
-                                                                "price":data["price"],
-                                                                "flight_no":data["flight_no"],
-                                                                "take_off":data["take_off"],
-                                                                "landing_at":data["landing_at"],
-                                                                "price_change":data["price_change"],
-                                                                "terminal_takeoff":data["terminal_takeoff"],
-                                                                "terminal_landing":data["terminal_landing"],
-                                                                "duration":data["duration"],
-                                                                "take_off_date":data["take_off_date"],
-                                                                "landing_date":data["landing_date"]
-                                                                }
-                                                            })
+            # try:
+            #     for data in results:
+            #         if data != None:
+            #             if not data["stale"]:
+            #                 print(data)
+            #                 mongo.db.usersearch.update_one({"flight_no":data["prev_flight_no"]},
+            #                                                {"$set":{
+            #                                                     "price":data["price"],
+            #                                                     "flight_no":data["flight_no"],
+            #                                                     "take_off":data["take_off"],
+            #                                                     "landing_at":data["landing_at"],
+            #                                                     "price_change":data["price_change"],
+            #                                                     "terminal_takeoff":data["terminal_takeoff"],
+            #                                                     "terminal_landing":data["terminal_landing"],
+            #                                                     "duration":data["duration"],
+            #                                                     "take_off_date":data["take_off_date"],
+            #                                                     "landing_date":data["landing_date"]
+            #                                                     }
+            #                                                 })
                             
-                            if data["trackCheap"]:
-                                subject = f"✨ Hot Deal Alert! ✈️ Cheapest Flight on {data['date']}: {data['flight_no']} from {data['source']} to {data['destination']}! 💸"
-                            elif data["price_change"] == "up":
-                                subject = f"Price Spike Alert! 🚀 Flight {data['flight_no']} from {data['source']} to {data['destination']} Just Got More Expensive! 💰"
-                            elif data["price_change"] == "down":
-                                subject = f"Great News! ✈️ Flight {data['flight_no']} from {data['source']} to {data['destination']} is Now Cheaper! 🎉"
-                            else:
-                                pass
-                            cleaned_price = data['price'].replace('\\u20b9', '₹')
-                            message_body = f"""
-                            Flight Details ✈️
+            #                 if data["trackCheap"]:
+            #                     subject = f"✨ Hot Deal Alert! ✈️ Cheapest Flight on {data['date']}: {data['flight_no']} from {data['source']} to {data['destination']}! 💸"
+            #                 elif data["price_change"] == "up":
+            #                     subject = f"Price Spike Alert! 🚀 Flight {data['flight_no']} from {data['source']} to {data['destination']} Just Got More Expensive! 💰"
+            #                 elif data["price_change"] == "down":
+            #                     subject = f"Great News! ✈️ Flight {data['flight_no']} from {data['source']} to {data['destination']} is Now Cheaper! 🎉"
+            #                 else:
+            #                     pass
+            #                 cleaned_price = data['price'].replace('\\u20b9', '₹')
+            #                 message_body = f"""
+            #                 Flight Details ✈️
 
-                            Flight Number: {data['flight_no']}
-                            Route: {data['source']} ➡️ {data['destination']}
-                            Date: {data['date']}
-                            Take Off Time: {data['take_off']} {data['take_off_date']}
-                            Landing Time: {data['landing_at']} {data['landing_date']}
-                            Take Off Terminal: {data['terminal_takeoff']}
-                            Landing Terminal: {data['terminal_landing']}
+            #                 Flight Number: {data['flight_no']}
+            #                 Route: {data['source']} ➡️ {data['destination']}
+            #                 Date: {data['date']}
+            #                 Take Off Time: {data['take_off']} {data['take_off_date']}
+            #                 Landing Time: {data['landing_at']} {data['landing_date']}
+            #                 Take Off Terminal: {data['terminal_takeoff']}
+            #                 Landing Terminal: {data['terminal_landing']}
 
-                            Current Price: 💸{cleaned_price}💸
+            #                 Current Price: 💸{cleaned_price}💸
 
-                            Safe travels! ✈️
-                            """                            
-                            recipient_mail = [data["email"]]
-                            msg = Message(
-                                subject=subject,
-                                recipients = recipient_mail,
-                                body=message_body
-                            )
-                            mail.send(msg)
-                            print(f"Mail sent to {recipient_mail} :)")
-                        else:
-                            mongo.db.usersearch.delete_one({
-                                "date":data["date"],
-                                "flight_no":data["flight_no"]
-                            })
-            except Exception as e:
-                print(f"An error occured:{e}")
+            #                 Safe travels! ✈️
+            #                 """                            
+            #                 recipient_mail = [data["email"]]
+            #                 msg = Message(
+            #                     subject=subject,
+            #                     recipients = recipient_mail,
+            #                     body=message_body
+            #                 )
+            #                 mail.send(msg)
+            #                 print(f"Mail sent to {recipient_mail} :)")
+            #             else:
+            #                 mongo.db.usersearch.delete_one({
+            #                     "date":data["date"],
+            #                     "flight_no":data["flight_no"]
+            #                 })
+            # except Exception as e:
+            #     print(f"An error occured:{e}")
            
 
         
